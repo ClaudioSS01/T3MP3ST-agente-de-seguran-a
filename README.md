@@ -16,257 +16,257 @@
 
 <div align="center">
 
-**A multi-agent offensive-security framework, built to turn the AI coding agent you already run into a zero-day hunter.**
+**Um framework multi-agente de segurança ofensiva, construído para transformar o agente de código de IA que você já usa em um caçador de zero-days.**
 
 ![scores: re-derivable](https://img.shields.io/badge/scores-re--derivable-brightgreen) &nbsp; ![verify-claims 27/27](https://img.shields.io/badge/verify--claims-27%2F27-brightgreen) &nbsp; ![PRs welcome](https://img.shields.io/badge/PRs-welcome-purple) &nbsp; ![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue)
 
 </div>
 
-**Your AI coding agent is already a hacker — T3MP3ST hands it an arsenal.**
+**Seu agente de código de IA já é um hacker — o T3MP3ST entrega a ele um arsenal.**
 
-Point it at an authorized target and the kill chain runs itself: **recon → exploit → report**, from a browser War Room or the CLI, driven by the agent you're *already* signed into — Claude Code, Codex, Hermes, OpenCode, Oh My Pi — or a model you run **fully offline** (Ollama, LM Studio, vLLM). No new API keys, no cloud tenant, no second bill. Your agent is the brain; T3MP3ST is the war machine bolted around it. **Self-hosted storm. Keyless warfare.** ⚡
+Aponte-o para um alvo autorizado e a kill chain se executa sozinha: **recon → exploit → report**, a partir de uma War Room no navegador ou da CLI, conduzida pelo agente em que você *já* está logado — Claude Code, Codex, Hermes, OpenCode, Oh My Pi — ou por um modelo que você roda **totalmente offline** (Ollama, LM Studio, vLLM). Sem novas chaves de API, sem tenant na nuvem, sem segunda fatura. Seu agente é o cérebro; o T3MP3ST é a máquina de guerra montada ao redor dele. **Tempestade auto-hospedada. Guerra sem chaves.** ⚡
 
-And it won't ask you to take its word for it. On **XBOW's own 104-challenge suite it scores 90.1% pass@1** — above XBOW's self-reported 85% — alongside hint-free CTF solves and a **cold hunt on real, post-cutoff CVEs the model had never seen**. Every number in this README recomputes from committed data with one command (`npm run verify-claims`). Loud about the mission, honest about the build — the [status table](#what-ships-today) says exactly what's live, what's scaffolding, and what's still roadmap; full receipts in [Benchmarks](#benchmarks).
+E ele não vai pedir que você acredite na palavra dele. Na **própria suíte de 104 desafios da XBOW, ele marca 90,1% de pass@1** — acima dos 85% auto-reportados pela XBOW — junto com solves de CTF sem dicas e uma **caçada a frio de CVEs reais, pós-cutoff, que o modelo nunca tinha visto**. Todo número neste README se recalcula a partir de dados versionados com um único comando (`npm run verify-claims`). Barulhento quanto à missão, honesto quanto à construção — a [tabela de status](#o-que-entrega-hoje) diz exatamente o que está no ar, o que é andaime e o que ainda é roadmap; recibos completos em [Benchmarks](#benchmarks).
 
-Three things set it apart:
+Três coisas o distinguem:
 
-1. **Reproducible.** Every number in this README recomputes from committed data — `npm run verify-claims` re-derives all of them, 27/27 green. A claim that can't be reproduced doesn't ship. No trust-me numbers, ever.
-2. **Keyless.** The AI coding agent already on your machine is the backbone. No API keys, no second bill, no gatekeeper.
-3. **Honest about scope.** The [status table](#what-ships-today) marks exactly what's stable, experimental, or roadmap — because red-teaming shouldn't be a priesthood, and it damn sure shouldn't run on vibes.
+1. **Reproduzível.** Todo número neste README se recalcula a partir de dados versionados — `npm run verify-claims` re-deriva todos eles, 27/27 no verde. Uma afirmação que não pode ser reproduzida não entra. Nunca números do tipo "confie em mim".
+2. **Sem chaves.** O agente de código de IA que já está na sua máquina é a espinha dorsal. Sem chaves de API, sem segunda fatura, sem porteiro.
+3. **Honesto quanto ao escopo.** A [tabela de status](#o-que-entrega-hoje) marca exatamente o que é estável, experimental ou roadmap — porque red-teaming não deveria ser um sacerdócio, e com certeza não deveria rodar na base do "vibe".
 
-**Jump to** → [Quick start](#quick-start) · [Usage guide](docs/GETTING_STARTED.md) · [Developer guide](docs/DEVELOPER_GUIDE.md) · [Updating](#updating-from-upstream) · [What it hunts](#what-it-hunts) · [What ships today](#what-ships-today) · [Benchmarks](#benchmarks) · [Architecture](#architecture) · [Docs](#documentation)
+**Pule para** → [Início rápido](#início-rápido) · [Guia de uso](docs/GETTING_STARTED.md) · [Guia do desenvolvedor](docs/DEVELOPER_GUIDE.md) · [Atualização](#atualizando-a-partir-do-upstream) · [O que ele caça](#o-que-ele-caça) · [O que entrega hoje](#o-que-entrega-hoje) · [Benchmarks](#benchmarks) · [Arquitetura](#arquitetura) · [Docs](#documentação)
 
-## ⚠️ Authorized use only
+## ⚠️ Uso autorizado apenas
 
-T3MP3ST is an **offensive** security tool, built for **authorized** testing, research, and education. Point it **only** at systems you own or have **explicit, written permission** to test. Unauthorized access to computers, networks, or data is illegal in most jurisdictions — **you alone are responsible** for how you use this software and for staying inside the law and your rules of engagement. Bring the storm to *your* targets, not someone else's.
+O T3MP3ST é uma ferramenta de segurança **ofensiva**, construída para testes, pesquisa e educação **autorizados**. Aponte-o **somente** para sistemas que você possui ou tem **permissão explícita e por escrito** para testar. Acesso não autorizado a computadores, redes ou dados é ilegal na maioria das jurisdições — **você é o único responsável** por como usa este software e por permanecer dentro da lei e das suas regras de engajamento. Leve a tempestade aos *seus* alvos, não aos de outra pessoa.
 
-T3MP3ST is provided **as-is under the AGPL-3.0 license, with no warranty and no liability** for any damage, loss, or misuse. The authors do not endorse, support, or condone unauthorized activity. Get permission. Stay in scope. Don't be a menace. 🫡
+O T3MP3ST é fornecido **no estado em que se encontra, sob a licença AGPL-3.0, sem garantia e sem responsabilização** por qualquer dano, perda ou uso indevido. Os autores não endossam, apoiam ou aprovam atividade não autorizada. Consiga permissão. Fique no escopo. Não seja uma ameaça. 🫡
 
-## Why it exists
+## Por que ele existe
 
-Offensive security sits behind years of practice and expensive tooling. The bet behind T3MP3ST is that a coordinated agent swarm puts real bug-hunting in reach of people who never got the invite, across web apps, CTFs, smart contracts, source code, and embedded/robotics OSS. That is an ambitious bet, and the sections below are careful to separate what already works from what is still a bet.
+A segurança ofensiva fica atrás de anos de prática e ferramentas caras. A aposta por trás do T3MP3ST é que um enxame coordenado de agentes coloca a caça real a bugs ao alcance de pessoas que nunca receberam o convite, através de aplicações web, CTFs, smart contracts, código-fonte e OSS de embarcados/robótica. É uma aposta ambiciosa, e as seções abaixo têm o cuidado de separar o que já funciona do que ainda é uma aposta.
 
-## What it hunts
+## O que ele caça
 
-| Domain | What it does | Status |
+| Domínio | O que faz | Status |
 |---|---|---|
-| 🕸️ **Web apps** | Black-box, external-attacker recon → exploit (XBEN suite) | ✅ Stable |
-| 🚩 **CTF** | Hint-free, sandbox-jailed solves (Cybench) | ✅ Stable |
-| 🤖 **Robotics / OT / embedded** | Coordinated-disclosure pipeline for OSS vuln hunting (OSV + live-PoC + refuter) | ✅ Pipeline stable |
-| 📂 **Source code** | White-box repo analysis with blind master-builder decomposition | ✅ Multi-language ingest (web-tree-sitter) |
-| 💰 **Smart contracts** | Damn Vulnerable DeFi | ⚠️ reproduction, not novel discovery |
-| ☁️ **Cloud (IaC)** | Misconfig-detection benchmark (`cloud:bench`) + opt-in cloud arsenal (aws/az/gcloud + scoutsuite/cloudfox/pmapper; pacu gated) | 🚧 IaC-misconfig scaffolding — live-cloud exploitation not yet benchmarked |
-| 📱 **Mobile** | Built-in static analyzer (manifest misconfig + secret/cleartext detection, `mobile:bench`) + opt-in arsenal (mobsfscan/objection/drozer; frida gated) | 🚧 static-detection scaffolding — dynamic exploitation not benchmarked |
-| 🔩 **Binary / RE** | Decompiled-output sink detector (unsafe-copy / format-string / cmd-injection / int-overflow, `binary:bench`) + opt-in arsenal (ghidra/radare2/objdump/checksec/strings; gdb gated) | 🚧 static sink-detection scaffolding — solving/pwn not benchmarked |
+| 🕸️ **Aplicações web** | Recon → exploit black-box, na perspectiva de atacante externo (suíte XBEN) | ✅ Estável |
+| 🚩 **CTF** | Solves sem dicas, isolados em sandbox (Cybench) | ✅ Estável |
+| 🤖 **Robótica / OT / embarcados** | Pipeline de divulgação coordenada para caça de vulns em OSS (OSV + PoC ao vivo + refutador) | ✅ Pipeline estável |
+| 📂 **Código-fonte** | Análise white-box de repositório com decomposição cega mestre-construtor | ✅ Ingestão multilíngue (web-tree-sitter) |
+| 💰 **Smart contracts** | Damn Vulnerable DeFi | ⚠️ reprodução, não descoberta inédita |
+| ☁️ **Cloud (IaC)** | Benchmark de detecção de misconfig (`cloud:bench`) + arsenal de nuvem opcional (aws/az/gcloud + scoutsuite/cloudfox/pmapper; pacu com trava) | 🚧 Andaime de misconfig de IaC — exploração em nuvem ao vivo ainda sem benchmark |
+| 📱 **Mobile** | Analisador estático embutido (misconfig de manifest + detecção de segredos/cleartext, `mobile:bench`) + arsenal opcional (mobsfscan/objection/drozer; frida com trava) | 🚧 Andaime de detecção estática — exploração dinâmica sem benchmark |
+| 🔩 **Binário / RE** | Detector de sinks em saída decompilada (unsafe-copy / format-string / cmd-injection / int-overflow, `binary:bench`) + arsenal opcional (ghidra/radare2/objdump/checksec/strings; gdb com trava) | 🚧 Andaime de detecção estática de sinks — solving/pwn sem benchmark |
 
-## Quick start
+## Início rápido
 
-Fastest path to a running War Room (keyless, ~2 min to set up; mission time depends on the target):
+Caminho mais rápido para uma War Room rodando (sem chaves, ~2 min para configurar; o tempo da missão depende do alvo):
 
 ```bash
 npm install
 npm run server        # War Room → http://127.0.0.1:3333/ui/
 ```
 
-In the War Room, open **Settings** and connect a local agent (Claude Code / Codex / Hermes / OpenCode / Oh My Pi). Then describe a target to **Op Admiral** in plain English and launch. The agent you connected is the brain. No key required.
+Na War Room, abra **Settings** e conecte um agente local (Claude Code / Codex / Hermes / OpenCode / Oh My Pi). Depois descreva um alvo ao **Op Admiral** em linguagem natural e dispare. O agente que você conectou é o cérebro. Nenhuma chave necessária.
 
-Prefer to bring a key? Set one and skip the connect step:
+Prefere trazer uma chave? Configure uma e pule a etapa de conexão:
 
 ```bash
-export OPENROUTER_API_KEY=...     # or VENICE_API_KEY / ANTHROPIC_API_KEY / OPENAI_API_KEY
-export XAI_API_KEY=...            # Grok Build (grok-build-0.1) — xAI's coding model, native tool-calling
+export OPENROUTER_API_KEY=...     # ou VENICE_API_KEY / ANTHROPIC_API_KEY / OPENAI_API_KEY
+export XAI_API_KEY=...            # Grok Build (grok-build-0.1) — modelo de código da xAI, com tool-calling nativo
 ```
 
-Slow local agents can be given more room with `T3MP3ST_LOCAL_AGENT_TIMEOUT_MS`
-for each CLI call, `T3MP3ST_TASK_TIMEOUT_MS` for mission tasks, and
-`T3MP3ST_GENERAL_TIMEOUT_MS` for planning requests. Values are milliseconds.
+Agentes locais lentos podem receber mais folga com `T3MP3ST_LOCAL_AGENT_TIMEOUT_MS`
+para cada chamada de CLI, `T3MP3ST_TASK_TIMEOUT_MS` para as tarefas da missão e
+`T3MP3ST_GENERAL_TIMEOUT_MS` para requisições de planejamento. Os valores são em milissegundos.
 
-Or run it **fully offline** on your own model — no key, no cloud. Defaults to Ollama; point it at any OpenAI-compatible server (LM Studio, vLLM, llama.cpp):
+Ou rode **totalmente offline** no seu próprio modelo — sem chave, sem nuvem. Usa Ollama por padrão; aponte-o para qualquer servidor compatível com OpenAI (LM Studio, vLLM, llama.cpp):
 
 ```bash
-ollama serve && ollama pull llama3                          # or an OpenAI-compatible server
+ollama serve && ollama pull llama3                          # ou um servidor compatível com OpenAI
 export TEMPEST_LOCAL_BASE_URL=http://localhost:11434/api    # LM Studio: http://localhost:1234/v1
 export TEMPEST_LOCAL_MODEL=llama3
-npm run build                                               # only needed from a git clone
+npm run build                                               # necessário apenas a partir de um clone git
 npx tempest                                                 # → "Change default provider" → local
 ```
 
-Tool-calling works on any local model (it's driven over text), so the Arsenal runs even on models without native function-calling.
+O tool-calling funciona em qualquer modelo local (é conduzido por texto), então o Arsenal roda até em modelos sem function-calling nativo.
 
-Check the numbers for yourself:
+Confira os números você mesmo:
 
 ```bash
-npm run verify-claims             # re-derives every headline from committed JSON in bench/
+npm run verify-claims             # re-deriva cada manchete a partir do JSON versionado em bench/
 ```
 
-Step-by-step operator usage lives in [Getting Started](docs/GETTING_STARTED.md). Library/SDK usage, the HTTP API, and MCP setup live in [docs/](docs/).
+O uso passo a passo pelo operador está em [Getting Started](docs/GETTING_STARTED.md). O uso como biblioteca/SDK, a API HTTP e a configuração de MCP estão em [docs/](docs/).
 
 ### Docker
 
-Run T3MP3ST API server in a container (localhost only, not exposed externally):
+Rode o servidor de API do T3MP3ST em um contêiner (somente localhost, não exposto externamente):
 
 ```bash
-cp .env.example .env       # configure API keys
+cp .env.example .env       # configure as chaves de API
 docker compose up -d       # API → http://localhost:3333
-docker compose logs -f     # view logs
+docker compose logs -f     # veja os logs
 ```
 
-**Security Note:** Container binds to `127.0.0.1:3333` - accessible only from localhost, not exposed to network.
+**Nota de segurança:** o contêiner escuta em `127.0.0.1:3333` — acessível apenas a partir do localhost, não exposto à rede.
 
-Test the API:
+Teste a API:
 ```bash
 curl http://localhost:3333/api/health
 curl http://localhost:3333/api/bounty/platforms
 ```
 
-Execute commands inside the container:
+Execute comandos dentro do contêiner:
 
 ```bash
 docker compose exec app npm run verify-claims
 docker compose exec app npm run cve:bench
 ```
 
-Full deployment guide: [docs/DOCKER.md](docs/DOCKER.md).
+Guia completo de implantação: [docs/DOCKER.md](docs/DOCKER.md).
 
-## Updating from upstream
+## Atualizando a partir do upstream
 
-If you installed from a release tarball or copied the tree instead of tracking `git pull`, use the built-in updater to sync with [github.com/elder-plinius/T3MP3ST](https://github.com/elder-plinius/T3MP3ST) without losing local secrets or bench output. It shows a numbered plan, asks **y/N** before changing anything, then runs `npm install`.
+Se você instalou a partir de um tarball de release ou copiou a árvore em vez de acompanhar com `git pull`, use o atualizador embutido para sincronizar com [github.com/elder-plinius/T3MP3ST](https://github.com/elder-plinius/T3MP3ST) sem perder segredos locais ou saída de bench. Ele mostra um plano numerado, pergunta **s/N** antes de mudar qualquer coisa e então roda `npm install`.
 
 ```bash
-npm run update          # interactive sync from upstream main
-npm run update:dry      # preview only — no git or npm changes
-npm run update:hard     # hard reset to upstream/main (still restores protected paths)
+npm run update          # sincronização interativa a partir do main upstream
+npm run update:dry      # apenas prévia — nenhuma mudança de git ou npm
+npm run update:hard     # hard reset para upstream/main (ainda restaura caminhos protegidos)
 ```
 
-Works on Windows (PowerShell), macOS, Linux, and WSL. Requires **git** and **npm** on your PATH.
+Funciona em Windows (PowerShell), macOS, Linux e WSL. Requer **git** e **npm** no seu PATH.
 
-### Safety modes
+### Modos de segurança
 
-The updater is destructive **only when explicitly requested**:
+O atualizador é destrutivo **apenas quando explicitamente solicitado**:
 
-| Command | What it does | Local changes |
+| Comando | O que faz | Mudanças locais |
 |---|---|---|
-| `npm run update` | Default interactive sync | `git merge upstream/main`; protected paths backed up and restored |
-| `npm run update:dry` | Read-only preview | No git init, fetch, merge, reset, or `npm install`; safe on tarball installs |
-| `npm run update:hard` | Opt-in hard reset | `git reset --hard upstream/main`; protected paths still restored |
+| `npm run update` | Sincronização interativa padrão | `git merge upstream/main`; caminhos protegidos são copiados e restaurados |
+| `npm run update:dry` | Prévia somente leitura | Sem git init, fetch, merge, reset ou `npm install`; seguro em instalações via tarball |
+| `npm run update:hard` | Hard reset opt-in | `git reset --hard upstream/main`; caminhos protegidos ainda são restaurados |
 
-All non-dry-run modes ask **y/N** before changing anything. Pass `--force` only in trusted automation. On the first-time path (no commits yet), the updater replaces the working tree with the upstream snapshot, but protected paths are backed up first and restored afterward.
+Todos os modos que não são dry-run perguntam **s/N** antes de mudar qualquer coisa. Passe `--force` apenas em automação confiável. No caminho de primeira vez (nenhum commit ainda), o atualizador substitui a árvore de trabalho pelo snapshot do upstream, mas os caminhos protegidos são copiados antes e restaurados depois.
 
-### Protected paths (inside the repo)
+### Caminhos protegidos (dentro do repo)
 
-Before replacing files, the updater backs up anything on disk that matches [`scripts/update-protected.txt`](scripts/update-protected.txt), then restores it after sync. **Only paths that exist locally are affected** — if you never created them, nothing happens.
+Antes de substituir arquivos, o atualizador faz backup de tudo em disco que corresponda a [`scripts/update-protected.txt`](scripts/update-protected.txt), e então restaura após a sincronização. **Apenas caminhos que existem localmente são afetados** — se você nunca os criou, nada acontece.
 
-| Path | Why it's protected |
+| Caminho | Por que é protegido |
 |---|---|
-| `.env`, `.env.*` | API keys and local env overrides. `!.env.example` is an exception — the template is **not** protected so upstream can update it. |
-| `.keys.local` | One-off key paste file loaded by bench scripts (e.g. `VENICE_API_KEY`) without touching `.env`. |
-| `.keys.bounty.json` | HackerOne / Bugcrowd / similar platform credentials. |
-| `bench/cybench/corpus-stage/` | Large cloned Cybench corpus (not redistributed; expensive to re-download). |
-| `bench/cybench/service-stage/`, `bench/cybench/challenges/` | Per-run Cybench Docker staging and challenge trees (regenerable, but slow to rebuild). |
-| `bench/xbow/stage/`, `bench/xbow/challenges/` | XBOW/XBEN challenge staging (large third-party trees). |
-| `bench/wild-hunt/` | Cold-hunt findings, PoCs, disclosure drafts, and campaign results — pre-coordination vuln material. |
-| `bench/decomposition-results/` | White-box decomposition run JSON (may contain unreported analysis). |
-| `bench/refusal-frontier/` | Refusal-boundary probe artifacts (raw model responses). |
-| `bench/nyu/` | Staged NYU CTF content from `nyu-prep.mjs`. |
-| `docs/disclosures/` | Generated vendor disclosure packages (`disclosure-gen` output). |
-| `reports/` | Engagement and hunt reports (persistent output; same tree as Docker volume mounts in deployment setups). |
-| `evidence/` | PoCs, screenshots, and other finding evidence kept across updates. |
+| `.env`, `.env.*` | Chaves de API e overrides de env locais. `!.env.example` é uma exceção — o template **não** é protegido para que o upstream possa atualizá-lo. |
+| `.keys.local` | Arquivo de colagem única de chaves, carregado pelos scripts de bench (ex.: `VENICE_API_KEY`) sem tocar no `.env`. |
+| `.keys.bounty.json` | Credenciais de plataformas HackerOne / Bugcrowd / similares. |
+| `bench/cybench/corpus-stage/` | Corpus grande clonado do Cybench (não redistribuído; caro de rebaixar). |
+| `bench/cybench/service-stage/`, `bench/cybench/challenges/` | Staging Docker por execução e árvores de desafios do Cybench (regeneráveis, mas lentos de reconstruir). |
+| `bench/xbow/stage/`, `bench/xbow/challenges/` | Staging de desafios XBOW/XBEN (árvores grandes de terceiros). |
+| `bench/wild-hunt/` | Achados de caça a frio, PoCs, rascunhos de divulgação e resultados de campanha — material de vuln pré-coordenação. |
+| `bench/decomposition-results/` | JSON de execuções de decomposição white-box (pode conter análise não reportada). |
+| `bench/refusal-frontier/` | Artefatos de sondagem de fronteira de recusa (respostas cruas do modelo). |
+| `bench/nyu/` | Conteúdo de CTF da NYU preparado por `nyu-prep.mjs`. |
+| `docs/disclosures/` | Pacotes de divulgação para fornecedores gerados (saída do `disclosure-gen`). |
+| `reports/` | Relatórios de engajamento e caça (saída persistente; mesma árvore dos volumes montados do Docker em setups de implantação). |
+| `evidence/` | PoCs, capturas de tela e outras evidências de achados mantidas entre atualizações. |
 
-Add your own patterns in `scripts/update-protected.local.txt` (optional local overlay; same glob syntax as the main manifest).
+Adicione seus próprios padrões em `scripts/update-protected.local.txt` (overlay local opcional; mesma sintaxe glob do manifesto principal).
 
-### Never touched (outside the repo)
+### Nunca tocado (fora do repo)
 
-These live outside the project tree — an update never reads or writes them:
+Estes ficam fora da árvore do projeto — uma atualização nunca os lê ou escreve:
 
-- `%APPDATA%\t3mp3st-nodejs\Config\config.json` (or the macOS/Linux `conf` store path) — saved by `npm run setup`
-- War Room browser **localStorage** on the War Room origin
-- Local agent auth (`~/.codex`, `%LOCALAPPDATA%\hermes`, etc.)
+- `%APPDATA%\t3mp3st-nodejs\Config\config.json` (ou o caminho do store `conf` no macOS/Linux) — salvo por `npm run setup`
+- **localStorage** do navegador da War Room, na origem da War Room
+- Auth do agente local (`~/.codex`, `%LOCALAPPDATA%\hermes`, etc.)
 
-## What ships today
+## O que entrega hoje
 
-The framework is an 8-operator kill chain, and this table won't blow smoke about it. **Recon is a live, tool-backed engine** — and the teeth are already real: 90.1% pass@1 on XBEN, 8/10 held-out post-cutoff CVEs pinned to exact file/line/CWE, and a coordinated-disclosure pipeline that's live enough to have drafts held for vendor coordination right now. What's *not* proven is the swarm. Each downstream operator — Exploiter, Infiltrator, Exfiltrator, Ghost — runs the **same real, tool-backed ReAct loop as recon** (real exploit tools, not stubs), but the headline numbers came from a single agent, not the coordinated 8-operator cell, and end-to-end swarm exploitation is unbenchmarked and still unreliable. The engine is real; the swarm is the part still earning its stripes. Loud where we've earned it, blunt about the rest.
+O framework é uma kill chain de 8 operadores, e esta tabela não vai vender fumaça sobre isso. **O Recon é um motor vivo, apoiado em ferramentas** — e os dentes já são reais: 90,1% de pass@1 no XBEN, 8/10 CVEs pós-cutoff retidos fixados em arquivo/linha/CWE exatos, e um pipeline de divulgação coordenada vivo o suficiente para ter rascunhos retidos para coordenação com fornecedores agora mesmo. O que *não* está provado é o enxame. Cada operador a jusante — Exploiter, Infiltrator, Exfiltrator, Ghost — roda o **mesmo loop ReAct real, apoiado em ferramentas, do recon** (ferramentas de exploração reais, não stubs), mas os números de manchete vieram de um único agente, não da célula coordenada de 8 operadores, e a exploração ponta a ponta pelo enxame não tem benchmark e ainda é instável. O motor é real; o enxame é a parte que ainda está conquistando as suas divisas. Barulhento onde merecemos, direto sobre o resto.
 
-| Component | Status | Notes |
+| Componente | Status | Notas |
 |---|---|---|
-| Re-derivable measurement (`verify-claims`) | ✅ Stable | every headline recomputes from committed artifacts |
-| Recon engine | ✅ Stable | drives nmap / DNS / HTTP / fingerprinting; every finding traces to real tool output |
-| Mission engine + War Room + Op Admiral | ✅ Stable | keyless through a connected local agent |
-| Arsenal, MCP server, HTTP API | ✅ Stable | 36 built-in tools by default; 109 with the opt-in `T3MP3ST_FULL_ARSENAL` (+73 adapters, with dangerous/catalog-only drivers — metasploit, hydra, pacu, frida — behind narrow approved paths rather than generic execution) — both counts re-derive via `verify-claims`. `security_recon` over MCP |
-| Egress-scope containment | ✅ Stable (on by default) | once a mission target is set, built-in networked tools refuse off-scope public hosts — not the target/subdomains, not loopback/private (`SCOPE DENIED`) — a tightened default, not a bare tool runner |
-| Coordinated-disclosure pipeline | ✅ Stable | OSV novelty + live PoC + refuter panel + CVSS; drafts only, a human sends |
-| White-box source analysis | ⚠️ Experimental | Multi-language ingest via web-tree-sitter (Python/JS/TS/Go/Java/C/C++); Python retains its regex parser, while other languages fail open to no extracted blocks; multi-model decomposition costs more tokens, not fewer |
-| DeFi (Damn Vulnerable DeFi) | ⚠️ Experimental | reproduces known exploit classes; not novel discovery |
-| Exploiter / Infiltrator / Exfiltrator / Ghost | ⚠️ Experimental | run the real tool-backed ReAct loop (same engine as recon); unproven as a coordinated swarm — single-agent is the benchmarked path, live swarm exploitation still unreliable |
-| Advanced modules (cloud, persistence, swarm, cognition) | 🚧 Planned | interface-only in `src/stubs/` |
-| Self-improvement loop | 🧪 Research | records lessons + proposals today; feeding them back into planning is roadmap |
+| Medição re-derivável (`verify-claims`) | ✅ Estável | toda manchete se recalcula a partir de artefatos versionados |
+| Motor de recon | ✅ Estável | conduz nmap / DNS / HTTP / fingerprinting; todo achado remonta a saída real de ferramenta |
+| Motor de missão + War Room + Op Admiral | ✅ Estável | sem chaves, através de um agente local conectado |
+| Arsenal, servidor MCP, API HTTP | ✅ Estável | 36 ferramentas embutidas por padrão; 109 com o opt-in `T3MP3ST_FULL_ARSENAL` (+73 adaptadores, com drivers perigosos/apenas-catálogo — metasploit, hydra, pacu, frida — atrás de caminhos aprovados estreitos em vez de execução genérica) — ambas as contagens se re-derivam via `verify-claims`. `security_recon` sobre MCP |
+| Contenção de escopo de egresso | ✅ Estável (ligado por padrão) | uma vez definido o alvo da missão, as ferramentas de rede embutidas recusam hosts públicos fora de escopo — não o alvo/subdomínios, não loopback/privado (`SCOPE DENIED`) — um padrão apertado, não um executor cru de ferramentas |
+| Pipeline de divulgação coordenada | ✅ Estável | novidade via OSV + PoC ao vivo + painel refutador + CVSS; apenas rascunhos, quem envia é um humano |
+| Análise white-box de código-fonte | ⚠️ Experimental | Ingestão multilíngue via web-tree-sitter (Python/JS/TS/Go/Java/C/C++); Python mantém seu parser regex, enquanto outras linguagens falham em aberto para nenhum bloco extraído; a decomposição multi-modelo custa mais tokens, não menos |
+| DeFi (Damn Vulnerable DeFi) | ⚠️ Experimental | reproduz classes de exploit conhecidas; não é descoberta inédita |
+| Exploiter / Infiltrator / Exfiltrator / Ghost | ⚠️ Experimental | rodam o loop ReAct real apoiado em ferramentas (mesmo motor do recon); não provados como enxame coordenado — o agente único é o caminho com benchmark, a exploração por enxame ao vivo ainda é instável |
+| Módulos avançados (cloud, persistência, enxame, cognição) | 🚧 Planejado | apenas interface em `src/stubs/` |
+| Loop de auto-aperfeiçoamento | 🧪 Pesquisa | registra lições + propostas hoje; realimentá-las no planejamento é roadmap |
 
-Full feature-by-feature breakdown: [FEATURES.md](FEATURES.md).
+Detalhamento completo, recurso por recurso: [FEATURES.md](FEATURES.md).
 
-## Coverage by domain
+## Cobertura por domínio
 
-Where the storm reaches today — and where it's headed. Same discipline as everything else: a domain is ✅ only when there's a receipt behind it.
+Onde a tempestade alcança hoje — e para onde ela vai. Mesma disciplina de tudo o mais: um domínio só é ✅ quando há um recibo por trás dele.
 
-| Domain | What it covers | Status |
+| Domínio | O que cobre | Status |
 |---|---|---|
-| 🕸️ **Web** | apps, APIs, auth flows, OWASP Top 10 | ✅ **Core** — XBEN 90.1% pass@1 |
-| 📂 **Code** | white-box source audits, SAST-style vuln hunting | ✅ **Proven (hunt result)** — held-out CVE-Zero: single-agent 8/10 exact file/line/CWE, 10/10 found (7 languages); the repo-ingest *engine* itself is still ⚠️ experimental |
-| 🚩 **CTF** | wargames, practice ranges, challenges | ✅ **Proven** — Cybench 23/40 hint-free |
-| 🔌 **Network / Infra** | recon, service/stack fingerprinting; lateral + privesc | ✅ recon (live nmap/DNS/HTTP engine) · ⚠️ lateral/privesc experimental |
-| 🤖 **Embedded / IoT / OT** | firmware, robotics, ICS/SCADA OSS | ✅ **CVE pipeline live** — coordinated-disclosure drafts held for vendors |
-| 📦 **Supply chain** | dependency audits, install-without-confirmation | ⚠️ **Real** — dedicated class; hit a CWE-829 on the held-out set |
-| 💰 **Blockchain** | smart contracts, DeFi, Solidity | ⚠️ **Reproduction only** — Damn Vulnerable DeFi, not novel discovery |
-| ☁️ **Cloud** | AWS/GCP/Azure misconfig, IAM, serverless | 🚧 **In development** |
-| 📱 **Mobile** | Android/iOS app security | 🚧 **In development** |
-| 🏢 **Identity / AD** | Kerberos, pass-the-hash, AD attacks | 🚧 **In development** |
-| 🔐 **Binary / RE** | overflows, ROP, exploit dev | 🚧 **In development** — needs specialized tooling |
+| 🕸️ **Web** | apps, APIs, fluxos de auth, OWASP Top 10 | ✅ **Núcleo** — XBEN 90,1% pass@1 |
+| 📂 **Código** | auditorias white-box de código-fonte, caça de vulns estilo SAST | ✅ **Comprovado (resultado de caça)** — CVE-Zero retido: agente único 8/10 arquivo/linha/CWE exatos, 10/10 encontrados (7 linguagens); o *motor* de ingestão de repo em si ainda é ⚠️ experimental |
+| 🚩 **CTF** | wargames, ranges de prática, desafios | ✅ **Comprovado** — Cybench 23/40 sem dicas |
+| 🔌 **Rede / Infra** | recon, fingerprinting de serviço/stack; movimento lateral + escalada de privilégio | ✅ recon (motor nmap/DNS/HTTP ao vivo) · ⚠️ lateral/privesc experimental |
+| 🤖 **Embarcados / IoT / OT** | firmware, robótica, OSS de ICS/SCADA | ✅ **Pipeline de CVE ao vivo** — rascunhos de divulgação coordenada retidos para fornecedores |
+| 📦 **Cadeia de suprimentos** | auditorias de dependências, instalação-sem-confirmação | ⚠️ **Real** — classe dedicada; acertou um CWE-829 no conjunto retido |
+| 💰 **Blockchain** | smart contracts, DeFi, Solidity | ⚠️ **Somente reprodução** — Damn Vulnerable DeFi, não descoberta inédita |
+| ☁️ **Cloud** | misconfig de AWS/GCP/Azure, IAM, serverless | 🚧 **Em desenvolvimento** |
+| 📱 **Mobile** | segurança de apps Android/iOS | 🚧 **Em desenvolvimento** |
+| 🏢 **Identidade / AD** | Kerberos, pass-the-hash, ataques a AD | 🚧 **Em desenvolvimento** |
+| 🔐 **Binário / RE** | overflows, ROP, desenvolvimento de exploits | 🚧 **Em desenvolvimento** — precisa de ferramentas especializadas |
 
-The class/squad architecture means new domains *compose* rather than fork — each is a loadout (specialist classes + arsenal + target adapter + a benchmark). 🚧 domains ship dark until they have a number.
+A arquitetura de classes/esquadrões faz com que novos domínios *componham* em vez de bifurcar — cada um é um loadout (classes especialistas + arsenal + adaptador de alvo + um benchmark). Domínios 🚧 são lançados no escuro até terem um número.
 
 ## Benchmarks
 
-Headline results. Each recomputes from the committed JSON with `npm run verify-claims`; full methodology and caveats are in the linked docs.
+Resultados de manchete. Cada um se recalcula a partir do JSON versionado com `npm run verify-claims`; metodologia completa e ressalvas estão nos docs linkados.
 
-| Suite | Result | Context |
+| Suíte | Resultado | Contexto |
 |---|---|---|
-| **XBEN** — XBOW's 104-challenge suite, black-box | **pass@1 mean 90.1%** (Wilson-95 86.2–92.9), floor 91/104 · gpt-5.5 | XBOW self-reports 85% on the same suite; ours re-derives the graded verdict from committed artifacts (raw transcripts stripped for privacy) |
-| **XBEN** — white-box (reported separately) | pass@1 98.7%, best-ball 104/104 · gpt-5.5 | never blended with the black-box number |
-| **Cybench** — 40-task academic bench, Opus 4.8, no hints | **23/40 (58%) hint-free, single-run pass@1** (`verify-claims`-enforced) | not the raw-score record (Anthropic: 76.5% pass@10); every flag graded against the committed oracle |
-| **Cybench model matrix** — identical 15-task committed subset, pass@1 | **Opus 4.7 vs 4.8**, with per-task source receipts and separate failure/abstention/infrastructure outcomes | [rebuild and inspect the model/harness matrix](docs/MODEL_MATRIX.md); historical system comparison, not an isolated model ranking |
-| **CVE-Zero** — 10 real post-cutoff (2026) CVEs, **held-out**, 7 languages | **single-agent 8/10 exact file/line/CWE** (verified all-exact, stable) · **10/10 found** (full pack) | **memorization- & fitting-proof**: post-cutoff, and the hardened prompts were never tuned on these; `verify-claims` recomputes it. n=10, directional; the swarm's edge here is recall, not a coordination-beats-solo proof |
+| **XBEN** — suíte de 104 desafios da XBOW, black-box | **média pass@1 de 90,1%** (Wilson-95 86,2–92,9), piso 91/104 · gpt-5.5 | a XBOW auto-reporta 85% na mesma suíte; a nossa re-deriva o veredito avaliado a partir de artefatos versionados (transcrições cruas removidas por privacidade) |
+| **XBEN** — white-box (reportado à parte) | pass@1 98,7%, best-ball 104/104 · gpt-5.5 | nunca misturado com o número black-box |
+| **Cybench** — bench acadêmico de 40 tarefas, Opus 4.8, sem dicas | **23/40 (58%) sem dicas, pass@1 de execução única** (imposto por `verify-claims`) | não é o recorde de score cru (Anthropic: 76,5% pass@10); toda flag avaliada contra o oráculo versionado |
+| **Matriz de modelos Cybench** — subconjunto idêntico e versionado de 15 tarefas, pass@1 | **Opus 4.7 vs 4.8**, com recibos de fonte por tarefa e desfechos separados de falha/abstenção/infraestrutura | [reconstrua e inspecione a matriz de modelo/harness](docs/MODEL_MATRIX.md); comparação histórica de sistema, não um ranking isolado de modelo |
+| **CVE-Zero** — 10 CVEs reais pós-cutoff (2026), **retidos**, 7 linguagens | **agente único 8/10 arquivo/linha/CWE exatos** (verificado todos-exatos, estável) · **10/10 encontrados** (pack completo) | **à prova de memorização e de ajuste**: pós-cutoff, e os prompts endurecidos nunca foram tunados nestes; `verify-claims` recalcula. n=10, direcional; a vantagem do enxame aqui é o recall, não uma prova de que coordenação-vence-solo |
 
-**How to read these:**
+**Como ler isto:**
 
-- Every solved flag is graded against a committed ground-truth oracle — not a self-report — and `verify-claims` recomputes the pass/fail. Raw per-step transcripts are stripped for operator privacy, so you re-check the **graded verdict**, not the raw tool output. Zero fabricated, enforced by an anti-fitting guard that runs on every push.
-- Black-box (source withheld) and white-box (source staged) are reported separately and never blended.
-- These ran a **single-agent ReAct loop, not the 8-operator swarm.** The swarm is framework architecture; it is not what scored these numbers.
-- Results are system-vs-system: this harness driving a strong current model, not an isolated-harness claim.
+- Toda flag resolvida é avaliada contra um oráculo de verdade-fundamental versionado — não um auto-report — e o `verify-claims` recalcula o passa/falha. As transcrições cruas por passo são removidas pela privacidade do operador, então você re-checa o **veredito avaliado**, não a saída crua da ferramenta. Zero fabricado, imposto por uma guarda anti-ajuste que roda em todo push.
+- Black-box (fonte retida) e white-box (fonte preparada) são reportados à parte e nunca misturados.
+- Estes rodaram um **loop ReAct de agente único, não o enxame de 8 operadores.** O enxame é arquitetura do framework; não é o que marcou estes números.
+- Os resultados são sistema-contra-sistema: este harness conduzindo um modelo atual forte, não uma afirmação de harness isolado.
 
-The number isn't the flex — the **receipt** is. A keyless, open-source harness that hands you the re-run instead of asking you to trust it: clone it, run `npm run verify-claims`, and every verdict above recomputes from its committed oracle in front of you.
+O número não é o flex — o **recibo** é. Um harness sem chaves, open-source, que te entrega a re-execução em vez de pedir que você confie: clone-o, rode `npm run verify-claims`, e todo veredito acima se recalcula a partir do seu oráculo versionado na sua frente.
 
-Deeper reading: [WALL_FORENSICS](docs/WALL_FORENSICS.md) (per-challenge misses), [CYBENCH](docs/CYBENCH.md), [INTEGRITY_LEDGER](docs/INTEGRITY_LEDGER.md) (contamination audit and every retraction), [OBSIDIVM](docs/OBSIDIVM.md) (our own live web range).
+Leitura mais profunda: [WALL_FORENSICS](docs/WALL_FORENSICS.md) (falhas por desafio), [CYBENCH](docs/CYBENCH.md), [INTEGRITY_LEDGER](docs/INTEGRITY_LEDGER.md) (auditoria de contaminação e toda retratação), [OBSIDIVM](docs/OBSIDIVM.md) (o nosso próprio range web ao vivo).
 
-## Documentation
+## Documentação
 
-| Doc | Contents |
+| Doc | Conteúdo |
 |---|---|
-| [Docs index](docs/README.md) | operator, developer, benchmark, and release documentation map |
-| [Getting Started](docs/GETTING_STARTED.md) | install, first launch, first safe mission, CLI basics, updates, and troubleshooting |
-| [Developer Guide](docs/DEVELOPER_GUIDE.md) | source map, scripts, SDK usage, extension points, and release checks |
-| [API Reference](docs/API_REFERENCE.md) | local HTTP API route groups and integration notes |
-| [MCP Guide](docs/MCP_GUIDE.md) | MCP server setup and `security_recon` usage |
-| [FEATURES.md](FEATURES.md) | feature-by-feature status (`[x]` shipped / `[~]` partial / `[ ]` planned) |
-| [SCOPE_AND_AUTHORIZATION](docs/SCOPE_AND_AUTHORIZATION.md) | authority model, scope receipts, evidence and retest rules |
-| [VERIFIED_PROVENANCE](docs/VERIFIED_PROVENANCE.md) | how findings become tool-proven instead of model-asserted |
-| [CONTRIBUTION_RECEIPTS](docs/CONTRIBUTION_RECEIPTS.md) | PR receipt template for scope, run mode, model/harness labels, redaction, and verification |
-| [MODEL_MATRIX](docs/MODEL_MATRIX.md) | Reproducible cross-model benchmark matrix and arbitrary variant-test model selection |
-| [TEAM_PREVIEW](docs/TEAM_PREVIEW.md) | first-run path and review script |
-| [INSTALL_MATRIX](docs/INSTALL_MATRIX.md) | macOS / Linux readiness table |
-| [ARSENAL_ACTIVATION_PLAN](docs/ARSENAL_ACTIVATION_PLAN.md) | optional external-tool setup |
-| [PULL_REQUEST_DELIVERY](docs/PULL_REQUEST_DELIVERY.md) | contributor and maintainer checklist for scoped, reviewable PRs |
-| [CYBENCH](docs/CYBENCH.md) · [WALL_FORENSICS](docs/WALL_FORENSICS.md) · [INTEGRITY_LEDGER](docs/INTEGRITY_LEDGER.md) · [COGNITIVE_ARCHITECTURE](docs/COGNITIVE_ARCHITECTURE.md) | benchmark methodology |
-| [RELEASE_CHECKLIST](docs/RELEASE_CHECKLIST.md) | the gates a release must pass |
+| [Índice de docs](docs/README.md) | mapa da documentação de operador, desenvolvedor, benchmark e release |
+| [Getting Started](docs/GETTING_STARTED.md) | instalação, primeiro launch, primeira missão segura, básico da CLI, atualizações e troubleshooting |
+| [Developer Guide](docs/DEVELOPER_GUIDE.md) | mapa do código, scripts, uso do SDK, pontos de extensão e checagens de release |
+| [API Reference](docs/API_REFERENCE.md) | grupos de rotas da API HTTP local e notas de integração |
+| [MCP Guide](docs/MCP_GUIDE.md) | configuração do servidor MCP e uso de `security_recon` |
+| [FEATURES.md](FEATURES.md) | status recurso por recurso (`[x]` entregue / `[~]` parcial / `[ ]` planejado) |
+| [SCOPE_AND_AUTHORIZATION](docs/SCOPE_AND_AUTHORIZATION.md) | modelo de autoridade, recibos de escopo, regras de evidência e reteste |
+| [VERIFIED_PROVENANCE](docs/VERIFIED_PROVENANCE.md) | como os achados se tornam provados-por-ferramenta em vez de afirmados-pelo-modelo |
+| [CONTRIBUTION_RECEIPTS](docs/CONTRIBUTION_RECEIPTS.md) | template de recibo de PR para escopo, modo de execução, rótulos de modelo/harness, redação e verificação |
+| [MODEL_MATRIX](docs/MODEL_MATRIX.md) | matriz reproduzível de benchmark entre modelos e seleção arbitrária de modelo para teste de variante |
+| [TEAM_PREVIEW](docs/TEAM_PREVIEW.md) | caminho de primeira execução e roteiro de revisão |
+| [INSTALL_MATRIX](docs/INSTALL_MATRIX.md) | tabela de prontidão macOS / Linux |
+| [ARSENAL_ACTIVATION_PLAN](docs/ARSENAL_ACTIVATION_PLAN.md) | configuração opcional de ferramentas externas |
+| [PULL_REQUEST_DELIVERY](docs/PULL_REQUEST_DELIVERY.md) | checklist de contribuidor e mantenedor para PRs escopados e revisáveis |
+| [CYBENCH](docs/CYBENCH.md) · [WALL_FORENSICS](docs/WALL_FORENSICS.md) · [INTEGRITY_LEDGER](docs/INTEGRITY_LEDGER.md) · [COGNITIVE_ARCHITECTURE](docs/COGNITIVE_ARCHITECTURE.md) | metodologia de benchmark |
+| [RELEASE_CHECKLIST](docs/RELEASE_CHECKLIST.md) | os portões que uma release precisa passar |
 
-## Architecture
+## Arquitetura
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -283,43 +283,43 @@ Deeper reading: [WALL_FORENSICS](docs/WALL_FORENSICS.md) (per-challenge misses),
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-Operators map to MITRE ATT&CK and Cyber Kill Chain phases (recon is live; later phases are scaffolded):
+Os operadores mapeiam para as fases do MITRE ATT&CK e da Cyber Kill Chain (o recon está vivo; as fases posteriores são andaimes):
 
-| Operator | Phase | MITRE | Function |
+| Operador | Fase | MITRE | Função |
 |---|---|---|---|
-| **Recon** | Reconnaissance | TA0043 | OSINT, network discovery, asset enumeration |
-| **Scanner** | Discovery | TA0007 | vulnerability scanning, service fingerprinting |
-| **Exploiter** | Initial Access | TA0001 | exploitation, payload delivery |
-| **Infiltrator** | Lateral Movement | TA0008 | post-exploitation, privilege escalation |
-| **Exfiltrator** | Collection / Exfil | TA0009/10 | data extraction, credential harvesting |
-| **Ghost** | Persistence | TA0003 | persistence, stealth, cleanup |
-| **Coordinator** | Command & Control | TA0011 | mission control, orchestration |
-| **Analyst** | Analysis | — | pattern analysis, reporting |
+| **Recon** | Reconhecimento | TA0043 | OSINT, descoberta de rede, enumeração de ativos |
+| **Scanner** | Descoberta | TA0007 | varredura de vulnerabilidades, fingerprinting de serviço |
+| **Exploiter** | Acesso Inicial | TA0001 | exploração, entrega de payload |
+| **Infiltrator** | Movimento Lateral | TA0008 | pós-exploração, escalada de privilégio |
+| **Exfiltrator** | Coleta / Exfil | TA0009/10 | extração de dados, coleta de credenciais |
+| **Ghost** | Persistência | TA0003 | persistência, furtividade, limpeza |
+| **Coordinator** | Comando & Controle | TA0011 | controle de missão, orquestração |
+| **Analyst** | Análise | — | análise de padrões, relatórios |
 
-**Providers:** OpenRouter, Venice, Anthropic, OpenAI, or a keyless local agent (Claude Code / Codex / Hermes / OpenCode / Oh My Pi). Set `OPENROUTER_API_KEY` / `VENICE_API_KEY` / `ANTHROPIC_API_KEY`, or connect an agent in Settings.
+**Provedores:** OpenRouter, Venice, Anthropic, OpenAI, ou um agente local sem chaves (Claude Code / Codex / Hermes / OpenCode / Oh My Pi). Configure `OPENROUTER_API_KEY` / `VENICE_API_KEY` / `ANTHROPIC_API_KEY`, ou conecte um agente em Settings.
 
-**Integrations:** `node dist/mcp-server.js` exposes `security_recon` to MCP-aware agents. `npm run server` starts the HTTP API (`POST /api/mission/start`, `GET /api/mission/status`, and more). Full reference in [docs/](docs/).
+**Integrações:** `node dist/mcp-server.js` expõe `security_recon` para agentes cientes de MCP. `npm run server` inicia a API HTTP (`POST /api/mission/start`, `GET /api/mission/status`, e mais). Referência completa em [docs/](docs/).
 
-## Contributing — join the swarm
+## Contribuindo — junte-se ao enxame
 
-Red-teaming shouldn't be a priesthood. Bring an adapter, a prompt pack, a runbook, a new arsenal tool, or a bug report.
+Red-teaming não deveria ser um sacerdócio. Traga um adaptador, um pacote de prompts, um runbook, uma nova ferramenta de arsenal ou um relatório de bug.
 
-**One rule, non-negotiable:** everything here is for **authorized testing only**. Owned, scoped, or consenting targets. Build for defenders, or don't build it here.
+**Uma regra, inegociável:** tudo aqui é para **testes autorizados apenas**. Alvos próprios, escopados ou consentidos. Construa para os defensores, ou não construa aqui.
 
-1. Fork it, branch it.
-2. Open a PR with tests. If you touch a headline number, `npm run verify-claims` has to stay green.
+1. Faça o fork, crie a branch.
+2. Abra um PR com testes. Se você mexer num número de manchete, o `npm run verify-claims` tem que continuar verde.
 
-Release process and gates: [RELEASE_CHECKLIST](docs/RELEASE_CHECKLIST.md).
+Processo de release e portões: [RELEASE_CHECKLIST](docs/RELEASE_CHECKLIST.md).
 
-## License
+## Licença
 
-AGPL-3.0. See [LICENSE](LICENSE).
+AGPL-3.0. Veja [LICENSE](LICENSE).
 
 ---
 
 <div align="center">
 
-*Fortes fortuna iuvat* — fortune favors the bold.
+*Fortes fortuna iuvat* — a sorte favorece os audazes.
 
 ⊰•-•✧ LOVE PLINY ✧•-•⊱ 🌩️
 
