@@ -26,7 +26,7 @@
     'Main': 'Principal', 'Ranges': 'Campos de Treino', 'Toolkit': 'Ferramental',
     'Command': 'Comando', 'System': 'Sistema',
     'War Room': 'Sala de Guerra', 'Live Scan': 'Varredura ao Vivo',
-    'Scope Receipts': 'Recibos de Escopo', 'Operatives': 'Agentes',
+    'Scope Receipts': 'Histórico de Buscas', 'Operatives': 'Agentes',
     'Evidence Vault': 'Cofre de Evidências', 'CTF Range': 'Campo CTF',
     'Arsenal': 'Arsenal', 'Terminal': 'Terminal', 'Config Library': 'Biblioteca de Configs',
     'Settings': 'Configurações', 'About': 'Sobre', 'Self-Improvement': 'Autoaperfeiçoamento',

@@ -119,6 +119,10 @@
     '.ux-ev-empty{text-align:center;color:#5a7a88;padding:26px;font-size:12.5px}',
     '.ux-ev-btn{padding:5px 12px;border-radius:6px;background:rgba(47,255,210,.1);border:1px solid rgba(47,255,210,.3);color:#2fffd2;font-size:11px;font-weight:700;cursor:pointer}',
     '.ux-ev-btn:hover{background:rgba(47,255,210,.18)}',
+    '.ux-ev-btn[disabled]{cursor:default}',
+    // Abas dentro do modal
+    '.ux-mt{padding:6px 14px;border-radius:7px;border:1px solid rgba(255,255,255,.1);background:none;color:#8a99a5;font-size:12px;font-weight:600;cursor:pointer}',
+    '.ux-mt.active{background:rgba(47,255,210,.12);border-color:rgba(47,255,210,.4);color:#2fffd2}',
     // Live Scan visual feedback
     '@keyframes uxPulse{0%,100%{opacity:1}50%{opacity:.5}}',
     '@keyframes uxScanLine{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}',
@@ -2195,24 +2199,224 @@
   // ═══════════════════════════════════════════════
   // CLAREZA: RECIBOS DE ESCOPO
   // ═══════════════════════════════════════════════
+  var RC_PAGE = 0;
+  var RC_SIZE = 8;
+
+  function rcApprovals() {
+    try { if (typeof ReceiptsState !== 'undefined' && ReceiptsState && Array.isArray(ReceiptsState.approvals)) return ReceiptsState.approvals; }
+    catch (e) {}
+    return [];
+  }
+  function rcDate(a) {
+    return a.createdAt || a.requestedAt || a.timestamp || a.time || a.expiresAt || null;
+  }
+
   function improveReceiptsPage() {
     var page = el('page-receipts');
     if (!page) return;
-    if (page.querySelector('.ux-receipts-steps')) return;
+    if (!page.querySelector('.ux-receipts-steps')) {
+      var explainer = page.querySelector('.ux-explainer');
+      var steps = document.createElement('div');
+      steps.className = 'ux-receipts-steps ux-tab-guide';
+      steps.innerHTML =
+        '<strong>O que é esta tela:</strong> o histórico de tudo que o sistema pediu para fazer nos alvos (cada busca/ação vira um registro). ' +
+        '⚠️ Os itens <strong style="color:#ffaa00">pendentes</strong> estão <strong>esperando sua permissão</strong> — é aqui que você libera o que estava bloqueado (aquele erro 403). ' +
+        'Clique em qualquer item para ver <strong>todos os detalhes</strong>. Use a busca e o filtro de data abaixo.';
+      if (explainer && explainer.nextSibling) page.insertBefore(steps, explainer.nextSibling);
+      else if (explainer) page.appendChild(steps);
+    }
 
-    var explainer = page.querySelector('.ux-explainer');
-    if (!explainer) return;
+    // Construir a barra de filtros + lista customizada (uma vez)
+    if (!el('uxRcControls')) {
+      var origList = el('receiptsList');
+      if (!origList) return;
+      // Esconder a lista original; usamos a nossa (mesmo dado, com filtros/paginação)
+      origList.style.display = 'none';
 
-    var steps = document.createElement('div');
-    steps.className = 'ux-receipts-steps ux-tab-guide';
-    steps.innerHTML =
-      '<strong>Como funciona, em 1 minuto:</strong> ' +
-      '<span class="ux-tab-guide-step">1</span> O sistema quer executar uma ação que toca num sistema real (ex: escanear uma porta). ' +
-      '<span class="ux-tab-guide-step">2</span> Ele PARA e pede sua permissão aqui — nada acontece sem seu "OK". ' +
-      '<span class="ux-tab-guide-step">3</span> Você <strong style="color:#00ff88">Aprova</strong> (libera) ou <strong style="color:#ff6666">Rejeita</strong> (bloqueia) cada pedido. ' +
-      '"Aprovar Pendentes" libera todos de uma vez. Se uma missão travou, provavelmente há um pedido esperando aqui.';
-    if (explainer.nextSibling) page.insertBefore(steps, explainer.nextSibling);
-    else page.appendChild(steps);
+      var controls = document.createElement('div');
+      controls.id = 'uxRcControls';
+      controls.className = 'ux-ev-filters';
+      controls.style.margin = '0 0 12px';
+      controls.innerHTML =
+        '<input id="uxRcSearch" type="text" placeholder="🔎 Buscar por alvo, ação, motivo ou ID...">' +
+        '<input id="uxRcFrom" type="date" title="De">' +
+        '<input id="uxRcTo" type="date" title="Até">' +
+        '<select id="uxRcStatus"><option value="">Todo status</option><option value="pending">Pendente</option><option value="approved">Aprovado</option><option value="rejected">Rejeitado</option><option value="expired">Expirado</option></select>';
+      origList.parentNode.insertBefore(controls, origList);
+
+      var mine = document.createElement('div');
+      mine.id = 'uxRcList';
+      origList.parentNode.insertBefore(mine, origList);
+
+      var pager = document.createElement('div');
+      pager.id = 'uxRcPager';
+      pager.style.cssText = 'display:flex;gap:10px;align-items:center;justify-content:center;padding:12px;';
+      origList.parentNode.insertBefore(pager, origList.nextSibling);
+
+      ['uxRcSearch', 'uxRcFrom', 'uxRcTo', 'uxRcStatus'].forEach(function (id) {
+        var e = el(id);
+        if (e) e.addEventListener(id === 'uxRcSearch' ? 'input' : 'change', function () { RC_PAGE = 0; renderReceiptsUx(); });
+      });
+
+      // Re-renderizar periodicamente (o app atualiza ReceiptsState a cada 4s)
+      setInterval(function () {
+        if (el('page-receipts') && el('page-receipts').classList.contains('active')) renderReceiptsUx();
+      }, 2000);
+    }
+    renderReceiptsUx();
+  }
+
+  function rcFiltered() {
+    var all = rcApprovals().slice();
+    var q = ((el('uxRcSearch') || {}).value || '').toLowerCase();
+    var from = (el('uxRcFrom') || {}).value || '';
+    var to = (el('uxRcTo') || {}).value || '';
+    var st = (el('uxRcStatus') || {}).value || '';
+    return all.filter(function (a) {
+      if (st && (a.status || '') !== st) return false;
+      if (q) {
+        var hay = ((a.id || '') + ' ' + (a.target || '') + ' ' + (a.action || '') + ' ' + (a.reason || '') + ' ' + (a.requestedBy || '')).toLowerCase();
+        if (hay.indexOf(q) === -1) return false;
+      }
+      if (from || to) {
+        var d = rcDate(a);
+        if (d) {
+          var day = new Date(d).toISOString().slice(0, 10);
+          if (from && day < from) return false;
+          if (to && day > to) return false;
+        }
+      }
+      return true;
+    });
+  }
+
+  function rcStatusColor(s) {
+    s = String(s || '').toLowerCase();
+    if (s === 'approved') return '#00ff88';
+    if (s === 'pending') return '#ffaa00';
+    if (s === 'rejected' || s === 'expired') return '#ff6666';
+    return '#8a99a5';
+  }
+  function rcStatusLabel(s) {
+    var m = { approved: 'Aprovado', pending: 'Pendente', rejected: 'Rejeitado', expired: 'Expirado' };
+    return m[String(s || '').toLowerCase()] || (s || '—');
+  }
+
+  function renderReceiptsUx() {
+    var list = el('uxRcList'); if (!list) return;
+    var filtered = rcFiltered();
+    var total = filtered.length;
+    var pages = Math.max(1, Math.ceil(total / RC_SIZE));
+    if (RC_PAGE >= pages) RC_PAGE = pages - 1;
+    var slice = filtered.slice(RC_PAGE * RC_SIZE, RC_PAGE * RC_SIZE + RC_SIZE);
+
+    if (!rcApprovals().length) {
+      list.innerHTML = '<div class="ux-ev-empty">Nenhum registro ainda. Quando o sistema pedir para executar ações nos alvos, elas aparecem aqui.</div>';
+    } else if (!total) {
+      list.innerHTML = '<div class="ux-ev-empty">Nenhum registro corresponde aos filtros.</div>';
+    } else {
+      list.innerHTML = slice.map(function (a, i) {
+        var idx = RC_PAGE * RC_SIZE + i;
+        var color = rcStatusColor(a.status);
+        var d = rcDate(a);
+        var when = d ? new Date(d).toLocaleString() : '';
+        return '<div class="ux-ev-item" style="border-left-color:' + color + ';cursor:pointer" onclick="window.__t3ux.rcModal(' + idx + ')">' +
+          '<div class="ux-ev-item-top">' +
+          '<span class="ux-ev-sev" style="color:' + color + ';background:rgba(255,255,255,.04)">' + escapeText(rcStatusLabel(a.status)) + '</span>' +
+          '<span class="ux-ev-item-title">' + escapeText(a.target || '-') + '</span>' +
+          '</div>' +
+          '<div class="ux-ev-meta"><span>⚙️ ' + escapeText(a.action || '-') + '</span>' + (when ? '<span>🕒 ' + escapeText(when) + '</span>' : '') + '<span style="font-family:monospace;font-size:9px">' + escapeText(a.id || '') + '</span></div>' +
+          (a.reason ? '<div style="font-size:11.5px;color:#9fb0bd">' + escapeText(String(a.reason).slice(0, 120)) + '</div>' : '') +
+          (String(a.status).toLowerCase() === 'pending'
+            ? '<div style="margin-top:8px;display:flex;gap:8px" onclick="event.stopPropagation()"><button class="ux-ev-btn" style="background:rgba(0,255,136,.12);border-color:rgba(0,255,136,.4);color:#00ff88" onclick="if(window.approveReceipt)approveReceipt(\'' + escapeText(a.id) + '\')">✓ Aprovar</button><button class="ux-ev-btn" style="background:rgba(255,68,68,.1);border-color:rgba(255,68,68,.35);color:#ff8888" onclick="if(window.rejectReceipt)rejectReceipt(\'' + escapeText(a.id) + '\')">✕ Rejeitar</button></div>'
+            : '') +
+          '</div>';
+      }).join('');
+    }
+
+    var pager = el('uxRcPager');
+    if (pager) {
+      if (total > RC_SIZE) {
+        pager.style.display = 'flex';
+        pager.innerHTML =
+          '<button class="ux-ev-btn" id="uxRcPrev"' + (RC_PAGE <= 0 ? ' disabled style="opacity:.4"' : '') + '>← Anterior</button>' +
+          '<span style="font-size:12px;color:#8a99a5">Página ' + (RC_PAGE + 1) + ' de ' + pages + ' · ' + total + ' registros</span>' +
+          '<button class="ux-ev-btn" id="uxRcNext"' + (RC_PAGE >= pages - 1 ? ' disabled style="opacity:.4"' : '') + '>Próxima →</button>';
+        var pv = el('uxRcPrev'), nx = el('uxRcNext');
+        if (pv) pv.addEventListener('click', function () { if (RC_PAGE > 0) { RC_PAGE--; renderReceiptsUx(); } });
+        if (nx) nx.addEventListener('click', function () { if (RC_PAGE < pages - 1) { RC_PAGE++; renderReceiptsUx(); } });
+      } else {
+        pager.style.display = 'none';
+      }
+    }
+  }
+
+  function rcModal(idx) {
+    var a = rcFiltered()[idx];
+    if (!a) return;
+    var color = rcStatusColor(a.status);
+    var d = rcDate(a);
+    var when = d ? new Date(d).toLocaleString() : '—';
+    var expires = a.expiresAt ? new Date(a.expiresAt).toLocaleString() : '—';
+
+    var resumo =
+      '<table style="width:100%;border-collapse:collapse;font-size:13px">' +
+      rcRow('Status', '<span style="color:' + color + ';font-weight:700">' + escapeText(rcStatusLabel(a.status)) + '</span>') +
+      rcRow('Alvo', escapeText(a.target || '-')) +
+      rcRow('Ação', escapeText(a.action || '-')) +
+      rcRow('Pedido por', escapeText(a.requestedBy || '-')) +
+      rcRow('Quando', escapeText(when)) +
+      rcRow('Expira', escapeText(expires)) +
+      rcRow('ID', '<code>' + escapeText(a.id || '') + '</code>') +
+      '</table>';
+
+    var detalhes = '<div style="font-size:13px;line-height:1.6;color:#c0d4de">' +
+      (a.reason ? '<p><strong style="color:#2fffd2">Motivo:</strong><br>' + escapeText(a.reason) + '</p>' : '<p style="color:#7a8a95">Sem motivo detalhado.</p>') +
+      (a.scope ? '<p><strong style="color:#2fffd2">Escopo:</strong> ' + escapeText(typeof a.scope === 'string' ? a.scope : JSON.stringify(a.scope)) + '</p>' : '') +
+      (a.tool ? '<p><strong style="color:#2fffd2">Ferramenta:</strong> ' + escapeText(a.tool) + '</p>' : '') +
+      (a.risk ? '<p><strong style="color:#2fffd2">Risco:</strong> ' + escapeText(a.risk) + '</p>' : '') +
+      '</div>';
+
+    var json = '<pre style="white-space:pre-wrap;word-break:break-word;font-size:11px;color:#8ab8cc;background:rgba(0,0,0,.3);padding:10px;border-radius:6px;max-height:300px;overflow:auto">' + escapeText(JSON.stringify(a, null, 2)) + '</pre>';
+
+    var acao = String(a.status).toLowerCase() === 'pending'
+      ? '<div style="font-size:13px;color:#c0d4de;line-height:1.6"><p>Este pedido está <strong style="color:#ffaa00">aguardando sua decisão</strong>. Aprovar libera a ação no alvo; rejeitar bloqueia.</p>' +
+        '<div style="display:flex;gap:10px;margin-top:12px">' +
+        '<button class="ux-ev-btn" style="background:rgba(0,255,136,.14);border-color:rgba(0,255,136,.45);color:#00ff88;padding:8px 16px" onclick="if(window.approveReceipt)approveReceipt(\'' + escapeText(a.id) + '\');document.querySelector(\'.ux-modal-overlay\').remove()">✓ Aprovar</button>' +
+        '<button class="ux-ev-btn" style="background:rgba(255,68,68,.12);border-color:rgba(255,68,68,.4);color:#ff8888;padding:8px 16px" onclick="if(window.rejectReceipt)rejectReceipt(\'' + escapeText(a.id) + '\');document.querySelector(\'.ux-modal-overlay\').remove()">✕ Rejeitar</button>' +
+        '</div></div>'
+      : '<div style="font-size:13px;color:#8a99a5">Este pedido já foi <strong style="color:' + color + '">' + escapeText(rcStatusLabel(a.status)) + '</strong>. Nenhuma ação pendente.</div>';
+
+    var body =
+      '<div class="ux-modal-tabs" style="display:flex;gap:4px;margin-bottom:14px;flex-wrap:wrap">' +
+      '<button class="ux-mt active" data-t="0">Resumo</button>' +
+      '<button class="ux-mt" data-t="1">Detalhes</button>' +
+      '<button class="ux-mt" data-t="2">Ação</button>' +
+      '<button class="ux-mt" data-t="3">Dados</button>' +
+      '</div>' +
+      '<div class="ux-mt-panel" data-p="0">' + resumo + '</div>' +
+      '<div class="ux-mt-panel" data-p="1" style="display:none">' + detalhes + '</div>' +
+      '<div class="ux-mt-panel" data-p="2" style="display:none">' + acao + '</div>' +
+      '<div class="ux-mt-panel" data-p="3" style="display:none">' + json + '</div>';
+
+    showHelpModal('🔎 Detalhes do registro', body);
+
+    // Ligar as abas do modal
+    var ov = document.querySelector('.ux-modal-overlay');
+    if (ov) {
+      var tabs = ov.querySelectorAll('.ux-mt');
+      var panels = ov.querySelectorAll('.ux-mt-panel');
+      for (var i = 0; i < tabs.length; i++) {
+        tabs[i].addEventListener('click', function () {
+          var t = this.getAttribute('data-t');
+          for (var j = 0; j < tabs.length; j++) tabs[j].classList.toggle('active', tabs[j] === this);
+          for (var k = 0; k < panels.length; k++) panels[k].style.display = panels[k].getAttribute('data-p') === t ? '' : 'none';
+        });
+      }
+    }
+  }
+  function rcRow(k, v) {
+    return '<tr><td style="padding:6px 10px 6px 0;color:#7a8a95;white-space:nowrap;vertical-align:top">' + k + '</td><td style="padding:6px 0;color:#d8e4ea">' + v + '</td></tr>';
   }
 
   // ═══════════════════════════════════════════════
@@ -2264,7 +2468,7 @@
     var TITLE_MAP = {
       'War Room': 'Sala de Guerra',
       'Live Scan': 'Varredura ao Vivo',
-      'Scope Receipts': 'Recibos de Escopo',
+      'Scope Receipts': 'Histórico de Buscas',
       'Operatives': 'Agentes',
       'Evidence Vault': 'Cofre de Evidências',
       'OBSIDIVM': 'Centro de Testes',
@@ -2640,5 +2844,5 @@
     if (subAct) { try { subAct(); } catch (e) {} }
   }
 
-  window.__t3ux = { run: run, dict: DYNAMIC_DICT, revealFor: revealFor };
+  window.__t3ux = { run: run, dict: DYNAMIC_DICT, revealFor: revealFor, rcModal: rcModal };
 })();
