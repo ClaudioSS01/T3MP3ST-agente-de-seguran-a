@@ -71,6 +71,54 @@
     '.ux-tab-guide strong{color:#2fffd2}',
     '.ux-tab-guide .ux-tab-guide-step{display:inline-block;background:rgba(47,255,210,.14);color:#2fffd2;font-weight:800;border-radius:5px;padding:1px 8px;margin-right:8px;font-size:11px}',
     '@media(max-width:640px){.ux-tab{min-width:calc(50% - 3px)}}',
+    // Sub-abas (dentro de uma aba principal)
+    '.ux-subtabs{margin:0 0 12px;padding:5px;background:rgba(0,0,0,.35);border-color:rgba(255,255,255,.05)}',
+    '.ux-subtabs .ux-tab{padding:7px 12px;min-width:100px}',
+    '.ux-subtabs .ux-tab-name{font-size:12px}',
+    '.ux-subguide{margin:-6px 0 14px;font-size:12px;background:linear-gradient(135deg,rgba(47,255,210,.06),rgba(0,136,255,.04));border-color:rgba(47,255,210,.18)}',
+    // Banner de status REAL da execução
+    '.ux-exec-status{padding:12px 16px;margin:0 0 14px;border-radius:10px;font-size:13px;line-height:1.55;display:flex;align-items:flex-start;gap:10px}',
+    '.ux-exec-status .ux-es-icon{font-size:20px;flex-shrink:0;line-height:1}',
+    '.ux-exec-status.blocked{background:rgba(255,68,68,.1);border:1px solid rgba(255,68,68,.4);color:#ffb0b0}',
+    '.ux-exec-status.blocked strong{color:#ff6666}',
+    '.ux-exec-status.live{background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.4);color:#a8f0cc}',
+    '.ux-exec-status.live strong{color:#00ff88}',
+    '.ux-exec-status.warn{background:rgba(255,170,0,.1);border:1px solid rgba(255,170,0,.4);color:#ffd88a}',
+    '.ux-exec-status.warn strong{color:#ffaa00}',
+    '.ux-exec-status.idle{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:#8a99a5}',
+    '.ux-exec-status .ux-es-act{margin-top:6px}',
+    '.ux-exec-status .ux-es-btn{display:inline-block;margin-top:6px;padding:4px 12px;border-radius:6px;background:rgba(255,68,68,.15);border:1px solid rgba(255,68,68,.4);color:#ff8888;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none}',
+    '.ux-exec-status .ux-es-btn:hover{background:rgba(255,68,68,.25)}',
+    // Espelho ao vivo de achados (Etapa 3)
+    '.ux-live-findings{padding:12px 14px;margin:0 0 14px;background:rgba(0,0,0,.28);border:1px solid rgba(255,68,68,.2);border-radius:10px}',
+    '.ux-lf-head{font-size:12.5px;color:#c0d8e0;margin-bottom:8px}',
+    '.ux-lf-head strong{color:#ff8888;font-size:15px}',
+    '.ux-lf-sub{color:#5a7a88;font-size:11px}',
+    '.ux-lf-list{display:flex;flex-direction:column;gap:4px}',
+    '.ux-lf-row{display:grid;grid-template-columns:58px 1fr 130px;gap:8px;align-items:center;padding:5px 8px;background:rgba(255,255,255,.02);border-radius:6px;font-size:11px}',
+    '.ux-lf-sev{border:1px solid;border-radius:4px;padding:1px 5px;font-size:9px;font-weight:800;text-align:center;text-transform:uppercase}',
+    '.ux-lf-title{color:#d8e4ea;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+    '.ux-lf-tgt{color:#7a8a95;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+    '.ux-lf-empty{color:#5a7a88;font-size:11.5px;padding:4px 0}',
+    // Cofre de Evidências — registro com filtros + notas
+    '.ux-ev-ledger{margin-top:16px;padding:14px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08);border-radius:12px}',
+    '.ux-ev-title{font-size:13px;font-weight:800;color:#2fffd2;margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}',
+    '.ux-ev-title .ux-ev-count{font-size:11px;color:#7a8a95;font-weight:600}',
+    '.ux-ev-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}',
+    '.ux-ev-filters select,.ux-ev-filters input{padding:6px 10px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.12);border-radius:7px;color:#d8e4ea;font-size:12px}',
+    '.ux-ev-filters input{flex:1;min-width:120px}',
+    '.ux-ev-overview{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}',
+    '.ux-ev-chip{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;border:1px solid}',
+    '.ux-ev-item{padding:10px 12px;margin-bottom:8px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-left-width:3px;border-radius:8px}',
+    '.ux-ev-item-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px}',
+    '.ux-ev-sev{padding:1px 7px;border-radius:4px;font-size:9px;font-weight:800;text-transform:uppercase}',
+    '.ux-ev-item-title{font-size:13px;color:#e4edf2;font-weight:600}',
+    '.ux-ev-meta{font-size:10.5px;color:#7a8a95;display:flex;gap:12px;flex-wrap:wrap;margin-bottom:6px}',
+    '.ux-ev-note{width:100%;box-sizing:border-box;margin-top:4px;padding:7px 9px;background:rgba(0,0,0,.3);border:1px solid rgba(47,255,210,.15);border-radius:6px;color:#cfe0e8;font-size:12px;font-family:inherit;resize:vertical;min-height:34px}',
+    '.ux-ev-note::placeholder{color:#4a5a62}',
+    '.ux-ev-empty{text-align:center;color:#5a7a88;padding:26px;font-size:12.5px}',
+    '.ux-ev-btn{padding:5px 12px;border-radius:6px;background:rgba(47,255,210,.1);border:1px solid rgba(47,255,210,.3);color:#2fffd2;font-size:11px;font-weight:700;cursor:pointer}',
+    '.ux-ev-btn:hover{background:rgba(47,255,210,.18)}',
     // Live Scan visual feedback
     '@keyframes uxPulse{0%,100%{opacity:1}50%{opacity:.5}}',
     '@keyframes uxScanLine{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}',
@@ -1562,6 +1610,125 @@
   }
 
   // ═══════════════════════════════════════════════
+  // SUB-ABAS (dentro de uma aba principal)
+  // ═══════════════════════════════════════════════
+  function buildSubTabs(sections) {
+    var bar = document.createElement('div');
+    bar.className = 'ux-tabs-bar ux-subtabs';
+    var guide = document.createElement('div');
+    guide.className = 'ux-tab-guide ux-subguide';
+    var cur = 0;
+    sections.forEach(function (s, i) {
+      s.blocks = (s.blocks || []).filter(Boolean);
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'ux-tab' + (i === 0 ? ' active' : '');
+      b.innerHTML = '<div class="ux-tab-top"><span class="ux-tab-name">' + s.name + '</span></div>' +
+        (s.hint ? '<span class="ux-tab-hint">' + s.hint + '</span>' : '');
+      b.addEventListener('click', function () { setActive(i); });
+      bar.appendChild(b);
+    });
+    function setActive(i) {
+      cur = i;
+      var btns = bar.querySelectorAll('.ux-tab');
+      for (var b = 0; b < btns.length; b++) btns[b].classList.toggle('active', b === i);
+      sections.forEach(function (s) { s.blocks.forEach(function (e) { e.style.display = 'none'; }); });
+      sections[i].blocks.forEach(function (e) { e.style.display = ''; });
+      guide.innerHTML = sections[i].guide || '';
+    }
+    function reapply() { setActive(cur); }
+    // Registro para o tour revelar a sub-aba certa
+    sections.forEach(function (s, i) {
+      s.blocks.forEach(function (e) { try { e.__uxSubActivate = function () { setActive(i); }; } catch (err) {} });
+    });
+    return { bar: bar, guide: guide, setActive: setActive, reapply: reapply };
+  }
+
+  // ═══════════════════════════════════════════════
+  // DETECTOR DE STATUS REAL DA MISSÃO
+  // ═══════════════════════════════════════════════
+  function setExecStatus(kind, html) {
+    var es = el('uxExecStatus');
+    if (!es) return;
+    es.className = 'ux-exec-status ' + kind;
+    es.innerHTML = html;
+  }
+  function execStatusIdleHtml() {
+    return '<span class="ux-es-icon">🕒</span><div><strong>Aguardando lançamento.</strong> ' +
+      'Nenhuma missão iniciada nesta sessão. Ao clicar em ENGAJAR, este aviso dirá na hora se a missão ' +
+      '<strong>iniciou de verdade</strong> no backend ou se foi bloqueada por um portão de segurança.</div>';
+  }
+  function installMissionWatcher() {
+    if (window.__uxMissionWatch) return;
+    var of = window.fetch;
+    if (typeof of !== 'function') return;
+    window.__uxMissionWatch = true;
+    window.fetch = function () {
+      var url = '';
+      try { url = (arguments[0] && arguments[0].url) || arguments[0] || ''; } catch (e) {}
+      var p = of.apply(this, arguments);
+      try {
+        if (typeof url === 'string' && /\/api\/mission\/(start|stop)/.test(url)) {
+          if (/\/start/.test(url)) {
+            setExecStatus('warn', '<span class="ux-es-icon">⏳</span><div><strong>Iniciando missão…</strong> pedindo ao backend para despachar os operadores.</div>');
+            p.then(function (r) {
+              var status = r.status;
+              if (status >= 200 && status < 300) {
+                setExecStatus('live', '<span class="ux-es-icon">✅</span><div><strong>Missão iniciada no backend — execução REAL em andamento.</strong> Os operadores foram despachados de verdade. Acompanhe o SITREP e os eventos abaixo. Os achados aparecem aqui e na Etapa 4, e são salvos automaticamente.</div>');
+              } else if (status === 403) {
+                r.clone().json().then(function (j) {
+                  var id = j && j.approval && j.approval.id;
+                  setExecStatus('blocked',
+                    '<span class="ux-es-icon">⛔</span><div><strong>Missão BLOQUEADA — nada está rodando de verdade ainda.</strong> O backend exige aprovação de escopo antes de tocar no alvo (portão de segurança). Os eventos "Deployed the…" que aparecem são o roteiro da interface, não execução real.' +
+                    '<div class="ux-es-act">👉 Aprove em <strong>Recibos de Escopo</strong>' + (id ? ' (pedido <code>' + id + '</code>)' : '') + ', ou confirme se o alvo está na sua lista de ativos autorizados.</div>' +
+                    '<a class="ux-es-btn" onclick="if(window.navigateTo)navigateTo(\'receipts\')">Abrir Recibos de Escopo →</a></div>');
+                }).catch(function () {
+                  setExecStatus('blocked', '<span class="ux-es-icon">⛔</span><div><strong>Missão BLOQUEADA (403).</strong> Aprovação de escopo pendente — nada está rodando de verdade. Abra Recibos de Escopo para aprovar.</div>');
+                });
+              } else {
+                r.clone().json().then(function (j) {
+                  setExecStatus('warn', '<span class="ux-es-icon">⚠️</span><div><strong>Não foi possível iniciar (' + status + ').</strong> ' + ((j && j.error) ? escapeText(j.error) : 'Verifique se há um alvo definido e uma IA conectada.') + '</div>');
+                }).catch(function () {
+                  setExecStatus('warn', '<span class="ux-es-icon">⚠️</span><div><strong>Não foi possível iniciar (' + status + ').</strong> Verifique alvo e IA conectada.</div>');
+                });
+              }
+            }).catch(function () {
+              setExecStatus('warn', '<span class="ux-es-icon">⚠️</span><div><strong>Falha de rede ao iniciar.</strong> O servidor respondeu com erro. Veja os eventos do sistema.</div>');
+            });
+          } else {
+            setExecStatus('idle', '<span class="ux-es-icon">⏹️</span><div><strong>Missão parada.</strong> Os achados coletados continuam salvos (Etapa 4 e Cofre de Evidências).</div>');
+          }
+        }
+      } catch (e) {}
+      return p;
+    };
+  }
+  function escapeText(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  // Liga os botões de lançamento para avançar à Etapa 3 (Execução)
+  function wireWarRoomLaunch(page, execSub) {
+    if (page.__uxLaunchWired) return;
+    var opsSection = el('opsSection');
+    var toExec = opsSection && opsSection.__uxActivate;
+    var btns = page.querySelectorAll('button');
+    for (var i = 0; i < btns.length; i++) {
+      var oc = btns[i].getAttribute('onclick') || '';
+      if (/launchMission|launchAutonomousMission|startZeroDayHunt|startMissionFromDashboard/i.test(oc)) {
+        btns[i].addEventListener('click', function () {
+          setTimeout(function () {
+            try { if (toExec) toExec(); } catch (e) {}
+            try { if (execSub) execSub.setActive(0); } catch (e) {}
+            try { window.scrollTo(0, 0); } catch (e) {}
+          }, 50);
+        });
+      }
+    }
+    page.__uxLaunchWired = true;
+  }
+
+  // ═══════════════════════════════════════════════
   // ABAS DA SALA DE GUERRA (etapas do teste)
   // ═══════════════════════════════════════════════
   function txt(id) { var e = el(id); return e ? (e.textContent || '') : ''; }
@@ -1601,10 +1768,44 @@
     var pliny = el('plinyCodeOpsLayer');
     var findings = el('findingsPanel');
 
+    // ── Sub-abas da Etapa 3 (Execução) + banner de status REAL ──
+    var execStatus = document.createElement('div');
+    execStatus.id = 'uxExecStatus';
+    execStatus.className = 'ux-exec-status idle';
+    execStatus.innerHTML = execStatusIdleHtml();
+
+    var liveFindings = document.createElement('div');
+    liveFindings.id = 'uxLiveFindings';
+    liveFindings.className = 'ux-live-findings';
+
+    var execSub = buildSubTabs([
+      {
+        name: '⚡ Ao Vivo', hint: 'O que está acontecendo agora',
+        guide: 'A <strong>verdade ao vivo</strong>: o SITREP (relatório de situação) e o fluxo de eventos do backend. ⚠️ Os eventos "Deployed the…" e o banner verde são o roteiro da interface — só é <strong>execução real</strong> quando o aviso acima estiver <strong style="color:#00ff88">verde</strong>. Os achados vão aparecendo e sendo salvos aqui embaixo.',
+        blocks: [execStatus, liveFindings, cmdHeader, opsSection]
+      },
+      {
+        name: '👥 Operadores', hint: 'O que cada agente faz',
+        guide: 'A <strong>Camada de Clareza do Operador</strong>: o que cada agente faz agora, decisões pendentes, estado das travas de segurança e nível de prova coletada.',
+        blocks: [clarity]
+      },
+      {
+        name: '📋 Missão', hint: 'Gravador, provas, tarefas',
+        guide: 'A <strong>Espinha da Missão</strong>: gravador de voo, bancada de evidências, quadro de ordens, entrada de alvos e recibos — tudo numa superfície só.',
+        blocks: [cockpit]
+      },
+      {
+        name: '⚙️ Avançado', hint: 'Camada de operações',
+        guide: 'A <strong>Camada de Operações</strong> (avançado): aprovação de ferramentas, pulso da caçada, cognição do enxame, registro de evidências, fila de caça e portões.',
+        blocks: [pliny]
+      }
+    ]);
+
     makeTabs({
       page: page,
       key: 'warroom',
       guide: true,
+      onActivate: function (i) { if (i === 2) setTimeout(execSub.reapply, 0); },
       tabs: [
         {
           num: 'Etapa 1', name: 'Preparação',
@@ -1630,8 +1831,8 @@
         {
           num: 'Etapa 3', name: 'Execução',
           hint: 'Lance e acompanhe',
-          guide: '<span class="ux-tab-guide-step">3 de 4</span> <strong>Execute e observe.</strong> Clique em ENGAJAR para lançar. Acompanhe o SITREP (relatório de situação), os eventos do sistema em tempo real e o progresso dos operadores. O ponto pulsa em <strong style="color:#2fffd2">ciano</strong> enquanto a missão roda.',
-          blocks: [cmdHeader, opsSection, clarity, cockpit, pliny],
+          guide: '<span class="ux-tab-guide-step">3 de 4</span> <strong>Execute e observe.</strong> Ao clicar em ENGAJAR você vem direto para cá. Use as <strong>sub-abas</strong> abaixo para focar. O aviso colorido diz se a missão <strong>iniciou de verdade</strong> no backend ou se foi bloqueada.',
+          blocks: [execSub.bar, execSub.guide, cmdHeader, opsSection, clarity, cockpit, pliny],
           statusFn: function () {
             var st = txt('cmdMissionStatus').toLowerCase();
             if (/run|execut|hunt|active|ativ|rodando|engaj/.test(st)) return 'run';
@@ -1651,6 +1852,23 @@
         }
       ]
     });
+
+    // Inserir a sub-barra/sub-guia + banners logo após o guia principal
+    var mainGuide = page.querySelector(':scope > .ux-tab-guide');
+    if (mainGuide && !page.querySelector('.ux-subtabs')) {
+      // ordem final: guia principal → sub-bar → sub-guide → status → achados ao vivo
+      mainGuide.parentNode.insertBefore(liveFindings, mainGuide.nextSibling);
+      mainGuide.parentNode.insertBefore(execStatus, mainGuide.nextSibling);
+      mainGuide.parentNode.insertBefore(execSub.guide, mainGuide.nextSibling);
+      mainGuide.parentNode.insertBefore(execSub.bar, mainGuide.nextSibling);
+    }
+    execSub.setActive(0);
+    mirrorLive();
+
+    // Ao lançar (ENGAJAR/BLITZ/CAÇAR), avançar para a Execução
+    wireWarRoomLaunch(page, execSub);
+    // Vigia real: intercepta mission/start e diz se iniciou ou foi bloqueada
+    installMissionWatcher();
   }
 
   // ═══════════════════════════════════════════════
@@ -2047,7 +2265,7 @@
       'War Room': 'Sala de Guerra',
       'Live Scan': 'Varredura ao Vivo',
       'Scope Receipts': 'Recibos de Escopo',
-      'Operatives': 'Operativos',
+      'Operatives': 'Agentes',
       'Evidence Vault': 'Cofre de Evidências',
       'OBSIDIVM': 'Centro de Testes',
       'CTF Range': 'Campo CTF',
@@ -2071,6 +2289,246 @@
       var t = pageTitle.textContent.trim();
       if (TITLE_MAP[t]) pageTitle.textContent = TITLE_MAP[t];
     }
+  }
+
+  // ═══════════════════════════════════════════════
+  // PERSISTÊNCIA DE ACHADOS (localStorage) + REGISTRO
+  // ═══════════════════════════════════════════════
+  var FKEY = 't3ux_findings_v1';
+  var NKEY = 't3ux_notes_v1';
+
+  function mfArray() {
+    try { return (typeof missionFindings !== 'undefined' && Array.isArray(missionFindings)) ? missionFindings : null; }
+    catch (e) { return null; }
+  }
+  function fkeyOf(f) { return (f.timestamp || '') + '|' + (f.title || '') + '|' + (f.target || ''); }
+  function stampFinding(f) {
+    if (f && !f._uxTs) { try { f._uxTs = Date.now(); f._uxDate = new Date().toISOString().slice(0, 10); } catch (e) {} }
+    return f;
+  }
+  function loadSaved() { try { return JSON.parse(localStorage.getItem(FKEY) || '[]'); } catch (e) { return []; } }
+  function saveFindings() {
+    var mf = mfArray(); if (!mf) return;
+    try {
+      localStorage.setItem(FKEY, JSON.stringify(mf.map(function (f) {
+        return { timestamp: f.timestamp, severity: f.severity, type: f.type, title: f.title, target: f.target, phase: f.phase, detail: f.detail, evidence: f.evidence, provenance: f.provenance, _uxDate: f._uxDate, _uxTs: f._uxTs };
+      })));
+    } catch (e) {}
+  }
+  function loadNotes() { try { return JSON.parse(localStorage.getItem(NKEY) || '{}'); } catch (e) { return {}; } }
+  function saveNote(k, v) { var n = loadNotes(); if (v && v.trim()) n[k] = v; else delete n[k]; try { localStorage.setItem(NKEY, JSON.stringify(n)); } catch (e) {} }
+
+  function restoreFindings() {
+    var mf = mfArray(); if (!mf) return;
+    var saved = loadSaved(); if (!saved.length) return;
+    var seen = {}; mf.forEach(function (f) { seen[fkeyOf(f)] = true; });
+    var added = 0;
+    saved.forEach(function (s) {
+      if (seen[fkeyOf(s)]) return;
+      seen[fkeyOf(s)] = true;
+      s.id = mf.length + 1;
+      mf.push(s); added++;
+    });
+    if (added) {
+      try {
+        var body = el('findingsBody');
+        if (body && typeof window.renderFindingsRow === 'function') {
+          body.innerHTML = '';
+          mf.forEach(function (f) { window.renderFindingsRow(f); });
+        }
+        if (typeof window.renderFindings === 'function') window.renderFindings();
+        var cnt = el('findingsCount'); if (cnt) cnt.textContent = '(' + mf.length + ')';
+        var sf = el('statFindings'); if (sf) sf.textContent = mf.length;
+      } catch (e) {}
+    }
+  }
+
+  function installFindings() {
+    if (window.addFinding && !window.addFinding.__uxWrapped) {
+      var orig = window.addFinding;
+      window.addFinding = function (f) {
+        try { if (f) stampFinding(f); } catch (e) {}
+        var r = orig.apply(this, arguments);
+        try { saveFindings(); mirrorLive(); renderEvidenceLedger(); } catch (e) {}
+        return r;
+      };
+      window.addFinding.__uxWrapped = true;
+    }
+    if (window.clearFindings && !window.clearFindings.__uxWrapped) {
+      var oc = window.clearFindings;
+      window.clearFindings = function () {
+        var r = oc.apply(this, arguments);
+        try { localStorage.removeItem(FKEY); mirrorLive(); renderEvidenceLedger(); } catch (e) {}
+        return r;
+      };
+      window.clearFindings.__uxWrapped = true;
+    }
+    restoreFindings();
+    mirrorLive();
+  }
+
+  // Espelho ao vivo dos achados na Etapa 3
+  function mirrorLive() {
+    var box = el('uxLiveFindings'); if (!box) return;
+    var mf = mfArray() || loadSaved();
+    var n = mf.length;
+    var last = mf.slice(-6).reverse();
+    var sevColor = { critical: '#ff0040', high: '#ff4444', medium: '#ffaa00', low: '#0088ff', info: '#888' };
+    box.innerHTML =
+      '<div class="ux-lf-head">🎯 Achados nesta sessão: <strong>' + n + '</strong> <span class="ux-lf-sub">· salvos automaticamente · veja todos na Etapa 4 e no Cofre de Evidências</span></div>' +
+      (n
+        ? '<div class="ux-lf-list">' + last.map(function (f) {
+            var c = sevColor[(f.severity || 'info').toLowerCase()] || '#888';
+            return '<div class="ux-lf-row"><span class="ux-lf-sev" style="color:' + c + ';border-color:' + c + '">' + escapeText((f.severity || '').toUpperCase()) + '</span><span class="ux-lf-title">' + escapeText(f.title || '') + '</span><span class="ux-lf-tgt">' + escapeText(f.target || '-') + '</span></div>';
+          }).join('') + '</div>'
+        : '<div class="ux-lf-empty">Nenhum achado ainda. Quando os operadores encontrarem algo, aparece aqui na hora — mesmo que você troque de aba, continua rodando e salvando.</div>');
+  }
+
+  // ═══════════════════════════════════════════════
+  // COFRE DE EVIDÊNCIAS — registro com filtros + notas
+  // ═══════════════════════════════════════════════
+  function unionFindings() {
+    var mf = mfArray() || [];
+    var map = {};
+    mf.forEach(function (f) { map[fkeyOf(f)] = f; });
+    loadSaved().forEach(function (s) { if (!map[fkeyOf(s)]) map[fkeyOf(s)] = s; });
+    return Object.keys(map).map(function (k) { return map[k]; });
+  }
+
+  function buildEvidenceLedger() {
+    var page = el('page-evidence'); if (!page) return;
+    if (el('uxEvLedger')) return;
+    var findingsCard = page.querySelector('.card');
+    if (!findingsCard) return;
+
+    var ledger = document.createElement('div');
+    ledger.id = 'uxEvLedger';
+    ledger.className = 'ux-ev-ledger';
+    ledger.innerHTML =
+      '<div class="ux-ev-title">🗂️ Registro de Achados <span class="ux-ev-count" id="uxEvCount"></span>' +
+      '<button class="ux-ev-btn" style="margin-left:auto" id="uxEvExport">📥 Exportar</button></div>' +
+      '<div class="ux-ev-filters">' +
+      '<select id="uxEvSev"><option value="">Toda severidade</option><option value="critical">Crítico</option><option value="high">Alto</option><option value="medium">Médio</option><option value="low">Baixo</option><option value="cred">Credenciais</option></select>' +
+      '<select id="uxEvTarget"><option value="">Todo alvo / projeto</option></select>' +
+      '<select id="uxEvDate"><option value="">Toda data</option></select>' +
+      '<input id="uxEvSearch" type="text" placeholder="Buscar no texto do achado...">' +
+      '</div>' +
+      '<div class="ux-ev-overview" id="uxEvOverview"></div>' +
+      '<div id="uxEvList"></div>';
+    findingsCard.appendChild(ledger);
+
+    ['uxEvSev', 'uxEvTarget', 'uxEvDate'].forEach(function (id) {
+      var e = el(id); if (e) e.addEventListener('change', renderEvidenceLedger);
+    });
+    var srch = el('uxEvSearch'); if (srch) srch.addEventListener('input', renderEvidenceLedger);
+    var exp = el('uxEvExport'); if (exp) exp.addEventListener('click', exportLedger);
+
+    renderEvidenceLedger();
+  }
+
+  function renderEvidenceLedger() {
+    var list = el('uxEvList'); if (!list) return;
+    var all = unionFindings();
+    // popular selects de alvo e data (uma vez por render, preservando seleção)
+    var tgtSel = el('uxEvTarget'), dateSel = el('uxEvDate');
+    if (tgtSel) {
+      var curT = tgtSel.value;
+      var targets = {}; all.forEach(function (f) { if (f.target) targets[f.target] = 1; });
+      tgtSel.innerHTML = '<option value="">Todo alvo / projeto</option>' + Object.keys(targets).sort().map(function (t) { return '<option value="' + escapeText(t) + '">' + escapeText(t) + '</option>'; }).join('');
+      tgtSel.value = curT;
+    }
+    if (dateSel) {
+      var curD = dateSel.value;
+      var dates = {}; all.forEach(function (f) { if (f._uxDate) dates[f._uxDate] = 1; });
+      dateSel.innerHTML = '<option value="">Toda data</option>' + Object.keys(dates).sort().reverse().map(function (d) { return '<option value="' + d + '">' + d + '</option>'; }).join('');
+      dateSel.value = curD;
+    }
+
+    var fSev = (el('uxEvSev') || {}).value || '';
+    var fTgt = (el('uxEvTarget') || {}).value || '';
+    var fDate = (el('uxEvDate') || {}).value || '';
+    var fTxt = ((el('uxEvSearch') || {}).value || '').toLowerCase();
+
+    var filtered = all.filter(function (f) {
+      if (fSev === 'cred') { if ((f.type || '') !== 'cred') return false; }
+      else if (fSev && (f.severity || '') !== fSev) return false;
+      if (fTgt && (f.target || '') !== fTgt) return false;
+      if (fDate && (f._uxDate || '') !== fDate) return false;
+      if (fTxt) {
+        var hay = ((f.title || '') + ' ' + (f.detail || '') + ' ' + (f.target || '')).toLowerCase();
+        if (hay.indexOf(fTxt) === -1) return false;
+      }
+      return true;
+    });
+
+    // overview
+    var ov = el('uxEvOverview');
+    if (ov) {
+      var counts = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
+      all.forEach(function (f) { var s = (f.severity || 'info').toLowerCase(); if (counts[s] != null) counts[s]++; });
+      var cc = { critical: '#ff0040', high: '#ff4444', medium: '#ffaa00', low: '#0088ff', info: '#888' };
+      var lbl = { critical: 'Crítico', high: 'Alto', medium: 'Médio', low: 'Baixo', info: 'Info' };
+      ov.innerHTML = Object.keys(counts).map(function (s) {
+        return '<span class="ux-ev-chip" style="color:' + cc[s] + ';border-color:' + cc[s] + '">' + lbl[s] + ': ' + counts[s] + '</span>';
+      }).join('');
+    }
+    var cnt = el('uxEvCount'); if (cnt) cnt.textContent = '(' + filtered.length + ' de ' + all.length + ')';
+
+    if (!all.length) {
+      list.innerHTML = '<div class="ux-ev-empty">Nenhum achado registrado ainda. Lance uma missão na Sala de Guerra — os achados aparecem aqui automaticamente e ficam salvos no seu navegador, mesmo depois de recarregar a página.</div>';
+      return;
+    }
+    if (!filtered.length) {
+      list.innerHTML = '<div class="ux-ev-empty">Nenhum achado corresponde aos filtros selecionados.</div>';
+      return;
+    }
+
+    var notes = loadNotes();
+    var sevColor = { critical: '#ff0040', high: '#ff4444', medium: '#ffaa00', low: '#0088ff', info: '#888' };
+    var typeIcon = { vuln: '🔓', cred: '🔑', access: '🚪', info: 'ℹ️' };
+    filtered.sort(function (a, b) { return (b._uxTs || 0) - (a._uxTs || 0); });
+    list.innerHTML = filtered.map(function (f) {
+      var c = sevColor[(f.severity || 'info').toLowerCase()] || '#888';
+      var k = fkeyOf(f);
+      var note = notes[k] || '';
+      return '<div class="ux-ev-item" style="border-left-color:' + c + '">' +
+        '<div class="ux-ev-item-top"><span class="ux-ev-sev" style="color:' + c + ';background:rgba(255,255,255,.04)">' + escapeText((f.severity || '').toUpperCase()) + '</span>' +
+        '<span>' + (typeIcon[f.type] || '') + '</span>' +
+        '<span class="ux-ev-item-title">' + escapeText(f.title || '') + '</span></div>' +
+        '<div class="ux-ev-meta"><span>🎯 ' + escapeText(f.target || '-') + '</span><span>📶 ' + escapeText(f.phase || '-') + '</span><span>🕒 ' + escapeText((f._uxDate ? f._uxDate + ' ' : '') + (f.timestamp || '')) + '</span></div>' +
+        (f.detail ? '<div style="font-size:11.5px;color:#9fb0bd;margin-bottom:4px">' + escapeText(f.detail) + '</div>' : '') +
+        '<textarea class="ux-ev-note" data-k="' + escapeText(k) + '" placeholder="✍️ Adicionar observação sobre este achado (salva automaticamente)...">' + escapeText(note) + '</textarea>' +
+        '</div>';
+    }).join('');
+
+    // ligar notas
+    var areas = list.querySelectorAll('.ux-ev-note');
+    for (var i = 0; i < areas.length; i++) {
+      areas[i].addEventListener('input', function () { saveNote(this.getAttribute('data-k'), this.value); });
+    }
+  }
+
+  function exportLedger() {
+    var all = unionFindings();
+    var notes = loadNotes();
+    var lines = ['# Registro de Achados — T3MP3ST', '', 'Total: ' + all.length + ' achado(s)', ''];
+    all.sort(function (a, b) { return (b._uxTs || 0) - (a._uxTs || 0); });
+    all.forEach(function (f) {
+      lines.push('## [' + (f.severity || '').toUpperCase() + '] ' + (f.title || ''));
+      lines.push('- Alvo: ' + (f.target || '-'));
+      lines.push('- Fase: ' + (f.phase || '-'));
+      lines.push('- Quando: ' + ((f._uxDate || '') + ' ' + (f.timestamp || '')));
+      if (f.detail) lines.push('- Detalhe: ' + f.detail);
+      var note = notes[fkeyOf(f)];
+      if (note) lines.push('- 📝 Observação: ' + note);
+      lines.push('');
+    });
+    var blob = new Blob([lines.join('\n')], { type: 'text/markdown' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'achados-t3mp3st.md';
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
   }
 
   // ═══════════════════════════════════════════════
@@ -2098,6 +2556,18 @@
     buildConfigsTabs();
     improveReceiptsPage();
     improveEvidencePage();
+    buildEvidenceLedger();
+    installFindings();
+    tagOperatorBadge();
+  }
+
+  // Tooltip explicando o badge de contagem de agentes ("8")
+  function tagOperatorBadge() {
+    var b = el('activeOperatorCount');
+    if (b && !b.__uxTip) {
+      b.title = 'Agentes ativos agora. O esquadrão padrão tem 8 (recon, scanner, exploiter, infiltrator, exfiltrator, ghost, coordinator, analyst). Não é um erro — é a contagem. Recolha agentes em "Agentes" para diminuir.';
+      b.__uxTip = true;
+    }
   }
 
   // Rodar quando a página estiver pronta
@@ -2160,11 +2630,14 @@
       ? (document.querySelector(elOrId) || el(elOrId))
       : elOrId;
     if (!target) return;
-    var node = target;
+    var node = target, mainAct = null, subAct = null;
     while (node && node !== document.body) {
-      if (node.__uxActivate) { try { node.__uxActivate(); } catch (e) {} return; }
+      if (!mainAct && node.__uxActivate) mainAct = node.__uxActivate;
+      if (!subAct && node.__uxSubActivate) subAct = node.__uxSubActivate;
       node = node.parentNode;
     }
+    if (mainAct) { try { mainAct(); } catch (e) {} }
+    if (subAct) { try { subAct(); } catch (e) {} }
   }
 
   window.__t3ux = { run: run, dict: DYNAMIC_DICT, revealFor: revealFor };
