@@ -52,6 +52,25 @@
     // Tab panels for page reorganization
     '.ux-tab-panel{display:none;padding:12px 0}',
     '.ux-tab-panel.active{display:block}',
+    // Sistema de ABAS (usado em todas as telas)
+    '.ux-tabs-bar{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 18px;padding:6px;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.07);border-radius:12px}',
+    '.ux-tab{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:9px 15px;border-radius:9px;border:1px solid transparent;background:none;cursor:pointer;color:#8a99a5;transition:all .18s;text-align:left;flex:1 1 auto;min-width:120px}',
+    '.ux-tab:hover{background:rgba(255,255,255,.04);color:#c0d8e0}',
+    '.ux-tab.active{background:linear-gradient(135deg,rgba(47,255,210,.13),rgba(0,136,255,.06));border-color:rgba(47,255,210,.38);color:#fff}',
+    '.ux-tab-top{display:flex;align-items:center;gap:7px;width:100%}',
+    '.ux-tab-num{font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#2fffd2;opacity:.85;white-space:nowrap}',
+    '.ux-tab-name{font-size:13px;font-weight:700;line-height:1.2}',
+    '.ux-tab-hint{font-size:10px;color:#5a7a88;line-height:1.3}',
+    '.ux-tab.active .ux-tab-hint{color:#8ab8cc}',
+    '.ux-tab-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-left:auto;background:#3a4a52;transition:background .3s}',
+    '.ux-tab-dot.ok{background:#00ff88;box-shadow:0 0 8px rgba(0,255,136,.5)}',
+    '.ux-tab-dot.run{background:#2fffd2;animation:uxPulse 1.1s ease infinite}',
+    '.ux-tab-dot.warn{background:#ffaa00}',
+    '.ux-tab-dot.wait{background:#3a4a52}',
+    '.ux-tab-guide{padding:11px 16px;margin:-6px 0 16px;background:linear-gradient(135deg,rgba(0,136,255,.08),rgba(47,255,210,.04));border:1px solid rgba(0,136,255,.2);border-radius:10px;font-size:12.5px;line-height:1.6;color:#a8c4d4}',
+    '.ux-tab-guide strong{color:#2fffd2}',
+    '.ux-tab-guide .ux-tab-guide-step{display:inline-block;background:rgba(47,255,210,.14);color:#2fffd2;font-weight:800;border-radius:5px;padding:1px 8px;margin-right:8px;font-size:11px}',
+    '@media(max-width:640px){.ux-tab{min-width:calc(50% - 3px)}}',
     // Live Scan visual feedback
     '@keyframes uxPulse{0%,100%{opacity:1}50%{opacity:.5}}',
     '@keyframes uxScanLine{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}',
@@ -392,6 +411,10 @@
     'MED': 'MÉD',
     'LOW': 'BAIXO',
     'CREDS': 'CREDS',
+    'Credentials': 'Credenciais',
+    'Critical': 'Crítico',
+    'Active Formation': 'Formação Ativa',
+    'Custom Deployment': 'Implantação Customizada',
 
     // Op Admiral → Comando Autônomo
     'Op Admiral': 'Comando Autônomo',
@@ -1435,6 +1458,585 @@
   }
 
   // ═══════════════════════════════════════════════
+  // MOTOR DE ABAS GENÉRICO (não-invasivo: só mostra/esconde blocos)
+  // ═══════════════════════════════════════════════
+  // Retorna o ancestral de `anchorEl` que é filho direto de `boundary`.
+  function blockOf(anchorEl, boundary) {
+    if (!anchorEl) return null;
+    var node = anchorEl;
+    while (node && node.parentNode && node.parentNode !== boundary) {
+      node = node.parentNode;
+    }
+    return (node && node.parentNode === boundary) ? node : null;
+  }
+  function blockById(id, boundary) {
+    return blockOf(el(id), boundary || null);
+  }
+
+  // Cria a barra de abas. def = { page, key, guide, onActivate, tabs:[{num,name,hint,blocks:[el],statusFn}] }
+  function makeTabs(def) {
+    var page = def.page;
+    if (!page) return null;
+    if (page.querySelector(':scope > .ux-tabs-bar')) return null;
+
+    // Filtrar blocos nulos
+    def.tabs.forEach(function (t) { t.blocks = (t.blocks || []).filter(Boolean); });
+
+    var bar = document.createElement('div');
+    bar.className = 'ux-tabs-bar';
+
+    var guide = null;
+    if (def.guide) {
+      guide = document.createElement('div');
+      guide.className = 'ux-tab-guide';
+    }
+
+    def.tabs.forEach(function (t, i) {
+      var btn = document.createElement('button');
+      btn.className = 'ux-tab' + (i === 0 ? ' active' : '');
+      btn.type = 'button';
+      btn.setAttribute('data-ux-tab', i);
+      btn.innerHTML =
+        '<div class="ux-tab-top">' +
+        (t.num ? '<span class="ux-tab-num">' + t.num + '</span>' : '') +
+        '<span class="ux-tab-name">' + t.name + '</span>' +
+        '<span class="ux-tab-dot wait"></span>' +
+        '</div>' +
+        (t.hint ? '<span class="ux-tab-hint">' + t.hint + '</span>' : '');
+      btn.addEventListener('click', function () { activate(i); });
+      bar.appendChild(btn);
+    });
+
+    function activate(i, noScroll) {
+      var btns = bar.querySelectorAll('.ux-tab');
+      for (var b = 0; b < btns.length; b++) btns[b].classList.toggle('active', b === i);
+      // esconder todos os blocos gerenciados
+      def.tabs.forEach(function (t) {
+        t.blocks.forEach(function (el2) { el2.style.display = 'none'; });
+      });
+      // mostrar os da aba ativa
+      def.tabs[i].blocks.forEach(function (el2) { el2.style.display = ''; });
+      if (guide) guide.innerHTML = def.tabs[i].guide || '';
+      if (typeof def.onActivate === 'function') def.onActivate(i);
+      if (!noScroll) { try { page.scrollIntoView({ block: 'start' }); } catch (e) {} }
+    }
+
+    // Registrar cada bloco → função de ativar sua aba (para o tour revelar)
+    def.tabs.forEach(function (t, ti) {
+      t.blocks.forEach(function (el2) {
+        try { el2.__uxActivate = function () { activate(ti, true); }; } catch (e) {}
+      });
+    });
+
+    // Inserir a barra: depois do explainer se houver, senão no topo
+    var explainer = page.querySelector(':scope > .ux-explainer');
+    if (explainer && explainer.nextSibling) {
+      page.insertBefore(bar, explainer.nextSibling);
+    } else if (explainer) {
+      page.appendChild(bar);
+    } else {
+      page.insertBefore(bar, page.firstChild);
+    }
+    if (guide) bar.parentNode.insertBefore(guide, bar.nextSibling);
+
+    // Ativar a primeira aba
+    activate(0);
+
+    // Guardar referência para atualização de status
+    page.__uxTabs = def;
+    page.__uxTabsBar = bar;
+    updateTabStatus(page);
+    return bar;
+  }
+
+  // Atualiza os pontos de status (verde=ok, ciano=rodando, cinza=aguardando)
+  function updateTabStatus(page) {
+    if (!page || !page.__uxTabs || !page.__uxTabsBar) return;
+    var def = page.__uxTabs;
+    var dots = page.__uxTabsBar.querySelectorAll('.ux-tab-dot');
+    def.tabs.forEach(function (t, i) {
+      if (typeof t.statusFn !== 'function' || !dots[i]) return;
+      var s = t.statusFn();
+      dots[i].className = 'ux-tab-dot ' + (s || 'wait');
+    });
+  }
+
+  // ═══════════════════════════════════════════════
+  // ABAS DA SALA DE GUERRA (etapas do teste)
+  // ═══════════════════════════════════════════════
+  function txt(id) { var e = el(id); return e ? (e.textContent || '') : ''; }
+
+  function buildWarRoomTabs() {
+    var page = el('page-warroom');
+    if (!page) return;
+    if (page.querySelector(':scope > .ux-tabs-bar')) { updateTabStatus(page); return; }
+
+    // Localizar a coluna interna de setup (dentro de .warroom-main-grid)
+    var mainGrid = page.querySelector('.warroom-main-grid');
+    var setupCol = mainGrid ? mainGrid.querySelector(':scope > div') : null;
+
+    // Blocos de setup (filhos diretos da coluna)
+    var preflightCard = setupCol ? blockById('check-operators', setupCol) : null;
+    var targetCard = setupCol ? blockById('targetHost', setupCol) : null;
+    var swarmCard = setupCol ? blockById('swarmGrid', setupCol) : null;
+    var configCard = setupCol ? (blockById('missionName', setupCol) || blockById('opsecLevel', setupCol)) : null;
+    var qualityCard = setupCol ? (blockById('qualityBar', setupCol) || blockById('metric-approval', setupCol)) : null;
+    var statsCard = setupCol ? blockById('statTargets', setupCol) : null;
+    // Quick demo: primeiro filho da coluna que contém onclick launchQuickDemo
+    var quickDemoCard = null;
+    if (setupCol) {
+      var kids = setupCol.children;
+      for (var k = 0; k < kids.length; k++) {
+        if (kids[k].innerHTML && kids[k].innerHTML.indexOf('launchQuickDemo') !== -1) { quickDemoCard = kids[k]; break; }
+      }
+    }
+
+    // Blocos de nível de página
+    var cmdHeader = blockById('cmdMissionName', page);
+    var statusBar = el('systemStatusBar');
+    var hero = el('zeroDayHuntHero');
+    var opsSection = el('opsSection');
+    var clarity = el('operatorDesignLab');
+    var cockpit = el('missionCockpit');
+    var pliny = el('plinyCodeOpsLayer');
+    var findings = el('findingsPanel');
+
+    makeTabs({
+      page: page,
+      key: 'warroom',
+      guide: true,
+      tabs: [
+        {
+          num: 'Etapa 1', name: 'Preparação',
+          hint: 'Conecte e escolha o alvo',
+          guide: '<span class="ux-tab-guide-step">1 de 4</span> <strong>Prepare o terreno.</strong> Verifique se o <strong>Backend</strong> está verde (ONLINE) no Status do Sistema, depois digite o alvo (site, IP, repo ou pacote) no campo de caça. O ponto ao lado da aba fica <strong style="color:#00ff88">verde</strong> quando está tudo pronto.',
+          blocks: [statusBar, hero, preflightCard, quickDemoCard, targetCard],
+          statusFn: function () {
+            var backendOk = /ONLINE|online/.test(txt('sysBackend'));
+            var targetOk = (parseInt(txt('targetCount'), 10) || 0) > 0 || ((el('targetHost') && el('targetHost').value.trim()) ? true : false) || ((el('heroHuntTarget') && el('heroHuntTarget').value.trim()) ? true : false);
+            return (backendOk && targetOk) ? 'ok' : (backendOk || targetOk) ? 'warn' : 'wait';
+          }
+        },
+        {
+          num: 'Etapa 2', name: 'Configuração',
+          hint: 'Operadores e modo',
+          guide: '<span class="ux-tab-guide-step">2 de 4</span> <strong>Monte a equipe.</strong> Escolha os operadores (agentes de IA) e a formação, defina o nível de furtividade (OPSEC) e o modo. Para começar rápido, a formação "Kill Chain Completa" cobre tudo. O ponto fica verde quando há operadores ativos.',
+          blocks: [swarmCard, configCard],
+          statusFn: function () {
+            var ops = (parseInt(txt('swarmCount'), 10) || parseInt(txt('activeUnitCount'), 10) || 0);
+            return ops > 0 ? 'ok' : 'wait';
+          }
+        },
+        {
+          num: 'Etapa 3', name: 'Execução',
+          hint: 'Lance e acompanhe',
+          guide: '<span class="ux-tab-guide-step">3 de 4</span> <strong>Execute e observe.</strong> Clique em ENGAJAR para lançar. Acompanhe o SITREP (relatório de situação), os eventos do sistema em tempo real e o progresso dos operadores. O ponto pulsa em <strong style="color:#2fffd2">ciano</strong> enquanto a missão roda.',
+          blocks: [cmdHeader, opsSection, clarity, cockpit, pliny],
+          statusFn: function () {
+            var st = txt('cmdMissionStatus').toLowerCase();
+            if (/run|execut|hunt|active|ativ|rodando|engaj/.test(st)) return 'run';
+            if (/done|complet|conclu/.test(st)) return 'ok';
+            return 'wait';
+          }
+        },
+        {
+          num: 'Etapa 4', name: 'Resultados',
+          hint: 'Achados e provas',
+          guide: '<span class="ux-tab-guide-step">4 de 4</span> <strong>Colha os resultados.</strong> Veja as vulnerabilidades encontradas, com severidade e prova. Use os filtros (Crítico → Baixo) e exporte o relatório. O ponto fica verde quando há achados registrados.',
+          blocks: [findings, qualityCard, statsCard],
+          statusFn: function () {
+            var f = parseInt(txt('findingsCount'), 10) || parseInt(txt('statFindings'), 10) || 0;
+            return f > 0 ? 'ok' : 'wait';
+          }
+        }
+      ]
+    });
+  }
+
+  // ═══════════════════════════════════════════════
+  // ABAS: OPERATIVOS
+  // ═══════════════════════════════════════════════
+  function buildOperatorsTabs() {
+    var page = el('page-operators');
+    if (!page) return;
+    // Traduzir a área de formação (conteúdo dinâmico)
+    translateDynamic();
+    if (page.querySelector(':scope > .ux-tabs-bar')) { return; }
+
+    var roster = el('operativesRoster');
+    // Formation bar = o div flex logo após o roster
+    var formationBar = roster ? roster.nextElementSibling : null;
+
+    // Traduzir "Active Formation" e nomes de formação já cobertos pelo dict.
+    makeTabs({
+      page: page,
+      guide: true,
+      tabs: [
+        {
+          num: '👥', name: 'Especialistas',
+          hint: 'Sua equipe de agentes de IA',
+          guide: '<strong>Cada especialista</strong> é um agente de IA focado numa área (web, rede, cripto...). Clique num deles para ver/editar prompt, ferramentas e parâmetros. Use "Implantar Tudo" para ativar todos.',
+          blocks: [roster]
+        },
+        {
+          num: '⚔️', name: 'Formações',
+          hint: 'Combinações prontas de equipe',
+          guide: '<strong>Formações</strong> são grupos pré-montados para cenários diferentes: "Kill Chain Completa" ativa todos, "Assalto Web" foca em web, etc. Clique numa formação para ativar os operadores correspondentes de uma vez.',
+          blocks: [formationBar]
+        }
+      ]
+    });
+  }
+
+  // ═══════════════════════════════════════════════
+  // ABAS: BENCHMARKS (renomeado "Centro de Provas")
+  // ═══════════════════════════════════════════════
+  function buildBenchmarksTabs() {
+    var page = el('page-benchmarks');
+    if (!page) return;
+
+    // Renomear OBSIDIVM → Centro de Provas
+    var titleEl = page.querySelector('.card-title');
+    if (titleEl && titleEl.textContent.indexOf('OBSIDIVM') !== -1) {
+      titleEl.textContent = '📈 Centro de Provas de Capacidade';
+    }
+
+    if (page.querySelector(':scope > .ux-tabs-bar')) { return; }
+
+    var mainCard = page.querySelector(':scope > .card');
+    if (!mainCard) return;
+
+    // Seções internas do card (irmãs)
+    function findChild(anchorId) { return blockById(anchorId, mainCard); }
+    var catSel = findChild('benchmarkCategorySelector');
+    var runOptions = catSel ? catSel.previousElementSibling : null; // Run Options row
+    var loopProgress = el('loopProgress');
+    var improveBtn = el('selfImprovementBtn') ? blockById('selfImprovementBtn', mainCard) : null;
+    var cognitive = mainCard.querySelector('details');
+
+    // Presets: procurar o div que contém loadBenchmarkSuite
+    var presets = null, industry = null;
+    var kids = mainCard.children;
+    for (var i = 0; i < kids.length; i++) {
+      var h = kids[i].innerHTML || '';
+      if (!presets && h.indexOf('loadBenchmarkSuite') !== -1) presets = kids[i];
+      else if (!industry && h.indexOf('loadRealBenchmarks') !== -1) industry = kids[i];
+    }
+
+    // Resultados: cards/seções após o mainCard (nível de página)
+    var resultBlocks = [];
+    var pk = page.children;
+    var started = false;
+    for (var j = 0; j < pk.length; j++) {
+      if (pk[j] === mainCard) { started = true; continue; }
+      if (started && pk[j].classList && !pk[j].classList.contains('ux-tabs-bar') && !pk[j].classList.contains('ux-tab-guide') && !pk[j].classList.contains('ux-explainer')) {
+        resultBlocks.push(pk[j]);
+      }
+    }
+
+    makeTabs({
+      page: page,
+      guide: true,
+      tabs: [
+        {
+          num: '1', name: 'Escolher Testes',
+          hint: 'O que você quer avaliar',
+          guide: '<strong>Escolha os testes.</strong> Use um preset rápido (OWASP, MITRE, CTF...) ou marque as categorias que quer avaliar (Web, Cripto, Forense...). Cada categoria testa uma habilidade diferente do sistema.',
+          blocks: [presets, industry, findChild('benchmarkCategorySelector')]
+        },
+        {
+          num: '2', name: 'Opções',
+          hint: 'Como rodar (juiz, auto-melhoria)',
+          guide: '<strong>Ajuste como rodar.</strong> "Juiz LLM" usa uma IA para avaliar as respostas. "Auto-Melhorar" roda o loop de aperfeiçoamento após os testes. As configurações cognitivas controlam como os agentes pensam juntos.',
+          blocks: [runOptions, improveBtn, cognitive, loopProgress]
+        },
+        {
+          num: '3', name: 'Resultados',
+          hint: 'Pontuações e histórico',
+          guide: '<strong>Veja os resultados.</strong> Pontuação geral, desempenho por categoria e histórico das execuções. Comece com "⚙️ Checagem de Config" (seguro, rápido) antes de rodar o "🔴 Teste ao Vivo" (consome tokens).',
+          blocks: resultBlocks
+        }
+      ]
+    });
+  }
+
+  // ═══════════════════════════════════════════════
+  // ABAS: CAMPO CTF (renomeado "Treino CTF")
+  // ═══════════════════════════════════════════════
+  function buildCtfTabs() {
+    var page = el('page-ctf-range');
+    if (!page) return;
+    if (page.querySelector(':scope > .ux-tabs-bar')) { return; }
+
+    var wizard = el('ctfSetupWizard');
+    // Range control = próximo grid após o wizard
+    var rangeControl = wizard ? wizard.nextElementSibling : null;
+    // Blocos de resultado restantes
+    var resultBlocks = [];
+    var pk = page.children;
+    var afterRange = false;
+    for (var j = 0; j < pk.length; j++) {
+      if (pk[j] === rangeControl) { afterRange = true; continue; }
+      if (afterRange && pk[j].classList && !pk[j].classList.contains('ux-tabs-bar') && !pk[j].classList.contains('ux-tab-guide') && !pk[j].classList.contains('ux-explainer')) {
+        resultBlocks.push(pk[j]);
+      }
+    }
+
+    makeTabs({
+      page: page,
+      guide: true,
+      tabs: [
+        {
+          num: '⚙️', name: 'Preparação',
+          hint: 'Configurar o ambiente',
+          guide: '<strong>Prepare o ambiente de treino.</strong> Estes desafios rodam em contêineres Docker locais. ⚠️ Você não usa Docker — esta tela é mais ilustrativa. Para testes reais verificados, use o <strong>Centro de Provas</strong>.',
+          blocks: [wizard]
+        },
+        {
+          num: '🚩', name: 'Desafios',
+          hint: 'Explorar e resolver',
+          guide: '<strong>Os desafios (CTF = Capturar a Bandeira).</strong> O sistema tenta encontrar uma "flag" (string secreta) que prova que explorou a vulnerabilidade. Aqui as flags são só verificadas por formato, não contra um alvo real.',
+          blocks: [rangeControl].concat(resultBlocks)
+        }
+      ]
+    });
+  }
+
+  // ═══════════════════════════════════════════════
+  // ABAS: ARSENAL (mantém a beleza; só organiza catálogo vs loadout)
+  // ═══════════════════════════════════════════════
+  function buildArsenalTabs() {
+    var page = el('page-arsenal');
+    if (!page) return;
+    if (page.querySelector(':scope > .ux-tabs-bar')) { return; }
+
+    var loadout = blockById('loadoutPreview', page) || el('loadoutPreview');
+    var grid = blockById('arsenalGrid', page) || el('arsenalGrid');
+    var filterBar = page.querySelector('.arsenal-filter-bar');
+
+    if (!grid) return;
+
+    makeTabs({
+      page: page,
+      guide: true,
+      tabs: [
+        {
+          num: '🧰', name: 'Catálogo',
+          hint: 'Escolher e armar ferramentas',
+          guide: '<strong>Escolha suas ferramentas.</strong> São 85+ ferramentas em 14 categorias. Use os filtros por categoria e clique numa ferramenta para <strong>armá-la</strong> (adicionar ao loadout). O botão "➕ Armar" adiciona à missão.',
+          blocks: [filterBar, grid]
+        },
+        {
+          num: '⚔️', name: 'Meu Loadout',
+          hint: 'Ferramentas selecionadas',
+          guide: '<strong>Seu loadout ativo.</strong> As ferramentas que você armou para a próxima missão. "⚔️ ARMAR TUDO" arma todas as visíveis, "📌 ATRIBUIR" distribui para operadores. O loadout é consultivo — operadores podem usar qualquer ferramenta.',
+          blocks: [loadout]
+        }
+      ]
+    });
+  }
+
+  // ═══════════════════════════════════════════════
+  // ABAS: CONFIGURAÇÕES (por categoria)
+  // ═══════════════════════════════════════════════
+  function buildSettingsTabs() {
+    var page = el('page-settings');
+    if (!page) return;
+    if (page.querySelector(':scope > .ux-tabs-bar')) { return; }
+
+    var sections = Array.prototype.slice.call(page.querySelectorAll(':scope > .settings-section'));
+    if (!sections.length) return;
+
+    function byTitle(kw) {
+      return sections.filter(function (s) {
+        var t = s.querySelector('.settings-title');
+        return t && kw.some(function (k) { return t.textContent.indexOf(k) !== -1; });
+      });
+    }
+
+    var cloud = byTitle(['Universal API', 'API Keys', 'Chaves de API', 'Model Selection', 'Seleção de Modelo', 'API Server']);
+    var local = byTitle(['Local Model', 'Modelo Local', 'Local Agents', 'Agentes Locais']);
+    var net = byTitle(['Egress Proxy', 'Proxy de Egresso']);
+    var data = byTitle(['Data', 'Dados']);
+
+    makeTabs({
+      page: page,
+      guide: true,
+      tabs: [
+        {
+          num: '☁️', name: 'IA na Nuvem',
+          hint: 'Provedor, chave e modelo',
+          guide: '<strong>Conecte uma IA na nuvem.</strong> Escolha o provedor (OpenRouter é o mais versátil), cole a chave de API e selecione o modelo. É o essencial — sem uma IA conectada, nada funciona.',
+          blocks: cloud
+        },
+        {
+          num: '🖥️', name: 'IA Local',
+          hint: 'Ollama e agentes locais',
+          guide: '<strong>Use uma IA no seu próprio PC.</strong> Sem custo de tokens, dados não saem da máquina. Seu setup atual: Ollama com qwen2.5-coder:7b. Ou conecte um agente já autenticado (Claude Code, Codex).',
+          blocks: local
+        },
+        {
+          num: '🧅', name: 'Rede & Privacidade',
+          hint: 'Proxy de egresso',
+          guide: '<strong>Proteja seu IP.</strong> Configure um proxy SOCKS5 para que o tráfego de teste saia por outro IP (Tor, VPS, túnel SSH). Sem proxy, o alvo vê seu IP real.',
+          blocks: net
+        },
+        {
+          num: '⚠️', name: 'Dados',
+          hint: 'Limpar dados salvos',
+          guide: '<strong>Zona de perigo.</strong> "Limpar Todos os Dados" apaga configurações, chaves e histórico salvos no navegador. Use com cuidado — não tem volta.',
+          blocks: data
+        }
+      ]
+    });
+  }
+
+  // ═══════════════════════════════════════════════
+  // ABAS: AUTOAPERFEIÇOAMENTO
+  // ═══════════════════════════════════════════════
+  function buildSelfImproveTabs() {
+    var page = el('page-selfimprove');
+    if (!page) return;
+    var root = el('siRoot');
+    if (!root || !root.innerHTML.trim()) return;
+    if (page.querySelector(':scope > .ux-tabs-bar')) { return; }
+
+    // O conteúdo é gerado em #siRoot; usamos os cards diretos como blocos.
+    var cards = Array.prototype.slice.call(root.children).filter(function (c) {
+      return c.nodeType === 1 && !c.classList.contains('ux-si-improved');
+    });
+    if (cards.length < 2) return;
+
+    // Agrupar: 1º card (governança) = Controles; resto = por conteúdo
+    var governanceBlocks = [], evolutionBlocks = [], memoryBlocks = [];
+    cards.forEach(function (c) {
+      var h = (c.textContent || '').toLowerCase();
+      if (h.indexOf('memór') !== -1 || h.indexOf('memory') !== -1 || h.indexOf('propost') !== -1) memoryBlocks.push(c);
+      else if (h.indexOf('evolu') !== -1 || h.indexOf('obsid') !== -1 || h.indexOf('timeline') !== -1 || h.indexOf('learning') !== -1 || h.indexOf('aprendiz') !== -1) evolutionBlocks.push(c);
+      else governanceBlocks.push(c);
+    });
+
+    makeTabs({
+      page: page,
+      guide: true,
+      tabs: [
+        {
+          num: '🎛️', name: 'Controles',
+          hint: 'Como as melhorias são aplicadas',
+          guide: '<strong>Você no controle.</strong> "Propor para aprovação" (seguro — você revisa cada mudança) vs "Auto-aplicar". Use "Congelar" para desativar tudo. Nada muda sem sua permissão.',
+          blocks: governanceBlocks.length ? governanceBlocks : cards.slice(0, 1)
+        },
+        {
+          num: '🧬', name: 'Evolução',
+          hint: 'Testes e aprendizado',
+          guide: '<strong>O sistema evolui.</strong> Roda testes, mede desempenho e propõe configurações melhores — como "seleção natural" das configs. Os ícones "?" explicam cada opção.',
+          blocks: evolutionBlocks.length ? evolutionBlocks : cards.slice(1)
+        },
+        {
+          num: '🧠', name: 'Memória',
+          hint: 'Lições aprendidas',
+          guide: '<strong>Memória do agente.</strong> Lições que o sistema identificou nas missões (ex: "nmap funciona melhor com -sV aqui"). Você aceita ou rejeita cada proposta. As aceitas viram conhecimento permanente.',
+          blocks: memoryBlocks
+        }
+      ].filter(function (t) { return t.blocks && t.blocks.length; })
+    });
+  }
+
+  // ═══════════════════════════════════════════════
+  // ABAS: BIBLIOTECA DE CONFIGS
+  // ═══════════════════════════════════════════════
+  function buildConfigsTabs() {
+    var page = el('page-configs');
+    if (!page) return;
+    if (page.querySelector(':scope > .ux-tabs-bar')) { return; }
+
+    var currentCard = blockById('currentConfigSummary', page);
+    var savedCard = blockById('configLibraryGrid', page);
+    if (!currentCard || !savedCard) return;
+
+    makeTabs({
+      page: page,
+      guide: true,
+      tabs: [
+        {
+          num: '📊', name: 'Config Atual',
+          hint: 'O que está ativo agora',
+          guide: '<strong>Sua configuração ativa.</strong> Mostra operadores, formação, modelo e a pontuação do último teste. Use "Salvar Config Atual" (no topo) para guardar este estado e reutilizar depois.',
+          blocks: [currentCard]
+        },
+        {
+          num: '💾', name: 'Configs Salvas',
+          hint: 'Presets guardados',
+          guide: '<strong>Seus presets salvos.</strong> Mantenha configurações diferentes: uma para testes web, outra para infra, outra para CTF. Ordene por data, pontuação ou nome. "Carregar" aplica, a estrela define como padrão.',
+          blocks: [savedCard]
+        }
+      ]
+    });
+  }
+
+  // ═══════════════════════════════════════════════
+  // CLAREZA: RECIBOS DE ESCOPO
+  // ═══════════════════════════════════════════════
+  function improveReceiptsPage() {
+    var page = el('page-receipts');
+    if (!page) return;
+    if (page.querySelector('.ux-receipts-steps')) return;
+
+    var explainer = page.querySelector('.ux-explainer');
+    if (!explainer) return;
+
+    var steps = document.createElement('div');
+    steps.className = 'ux-receipts-steps ux-tab-guide';
+    steps.innerHTML =
+      '<strong>Como funciona, em 1 minuto:</strong> ' +
+      '<span class="ux-tab-guide-step">1</span> O sistema quer executar uma ação que toca num sistema real (ex: escanear uma porta). ' +
+      '<span class="ux-tab-guide-step">2</span> Ele PARA e pede sua permissão aqui — nada acontece sem seu "OK". ' +
+      '<span class="ux-tab-guide-step">3</span> Você <strong style="color:#00ff88">Aprova</strong> (libera) ou <strong style="color:#ff6666">Rejeita</strong> (bloqueia) cada pedido. ' +
+      '"Aprovar Pendentes" libera todos de uma vez. Se uma missão travou, provavelmente há um pedido esperando aqui.';
+    if (explainer.nextSibling) page.insertBefore(steps, explainer.nextSibling);
+    else page.appendChild(steps);
+  }
+
+  // ═══════════════════════════════════════════════
+  // CLAREZA: COFRE DE EVIDÊNCIAS
+  // ═══════════════════════════════════════════════
+  function improveEvidencePage() {
+    var page = el('page-evidence');
+    if (!page) return;
+    // Traduzir labels dos stat-cards
+    var labelMap = { 'Critical': 'Crítico', 'High': 'Alto', 'Medium': 'Médio', 'Credentials': 'Credenciais' };
+    var labels = page.querySelectorAll('.stat-label');
+    for (var i = 0; i < labels.length; i++) {
+      var t = labels[i].textContent.trim();
+      if (labelMap[t]) labels[i].textContent = labelMap[t];
+    }
+    if (page.querySelector(':scope > .ux-tabs-bar')) { return; }
+
+    var statsGrid = page.querySelector('.stats-grid');
+    var findingsCard = blockById('findingsGrid', page);
+    if (!statsGrid || !findingsCard) return;
+
+    makeTabs({
+      page: page,
+      guide: true,
+      tabs: [
+        {
+          num: '📊', name: 'Resumo',
+          hint: 'Contagem por severidade',
+          guide: '<strong>Visão geral dos achados.</strong> Contagem por severidade: <strong style="color:#ff4444">Crítico</strong> (risco imediato), <strong style="color:#ffaa00">Alto</strong>, <strong style="color:#00aaff">Médio</strong>, e Credenciais encontradas. Zero em tudo = nenhuma missão concluída ainda.',
+          blocks: [statsGrid]
+        },
+        {
+          num: '🔓', name: 'Achados',
+          hint: 'Lista detalhada + provas',
+          guide: '<strong>Cada vulnerabilidade encontrada.</strong> Com tipo, severidade, alvo e prova rastreável até o comando que produziu o resultado. "Verificado" = uma ferramenta real confirmou, não é a IA supondo. Use "Exportar" para o relatório.',
+          blocks: [findingsCard]
+        }
+      ]
+    });
+  }
+
+  // ═══════════════════════════════════════════════
   // RENOMEAR HEADERS DE PÁGINA
   // ═══════════════════════════════════════════════
   function renameHeaders() {
@@ -1486,6 +2088,16 @@
     improveSelfImprovePage();
     improveConfigsPage();
     improveLiveScanPage();
+    buildWarRoomTabs();
+    buildOperatorsTabs();
+    buildBenchmarksTabs();
+    buildCtfTabs();
+    buildArsenalTabs();
+    buildSettingsTabs();
+    buildSelfImproveTabs();
+    buildConfigsTabs();
+    improveReceiptsPage();
+    improveEvidencePage();
   }
 
   // Rodar quando a página estiver pronta
@@ -1514,6 +2126,16 @@
         improveSelfImprovePage();
         improveConfigsPage();
         improveLiveScanPage();
+        buildWarRoomTabs();
+        buildOperatorsTabs();
+        buildBenchmarksTabs();
+        buildCtfTabs();
+        buildArsenalTabs();
+        buildSettingsTabs();
+        buildSelfImproveTabs();
+        buildConfigsTabs();
+        improveReceiptsPage();
+        improveEvidencePage();
       }, 200);
       // Self-Improvement renderiza com 60ms delay, então precisa de re-run adicional
       setTimeout(function () {
@@ -1524,7 +2146,26 @@
   }
 
   // Rodar periodicamente para pegar conteúdo gerado dinamicamente
-  setInterval(function () { translateDynamic(); improveLiveScanPage(); }, 5000);
+  setInterval(function () {
+    translateDynamic();
+    improveLiveScanPage();
+    // Atualizar status das abas visíveis
+    var wr = el('page-warroom');
+    if (wr && wr.classList.contains('active')) updateTabStatus(wr);
+  }, 5000);
 
-  window.__t3ux = { run: run, dict: DYNAMIC_DICT };
+  // Revela a aba que contém um elemento (usado pelo tour para destacar blocos ocultos)
+  function revealFor(elOrId) {
+    var target = typeof elOrId === 'string'
+      ? (document.querySelector(elOrId) || el(elOrId))
+      : elOrId;
+    if (!target) return;
+    var node = target;
+    while (node && node !== document.body) {
+      if (node.__uxActivate) { try { node.__uxActivate(); } catch (e) {} return; }
+      node = node.parentNode;
+    }
+  }
+
+  window.__t3ux = { run: run, dict: DYNAMIC_DICT, revealFor: revealFor };
 })();

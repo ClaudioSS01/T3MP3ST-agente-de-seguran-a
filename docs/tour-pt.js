@@ -400,13 +400,15 @@
     renderDots();
 
     if (step.el) {
+      // Revelar a aba que contém o alvo (se estiver escondido por abas de UX)
+      try { if (window.__t3ux && window.__t3ux.revealFor) window.__t3ux.revealFor(step.el); } catch (e) {}
       var target = document.querySelector(step.el);
       if (target && target.scrollIntoView) {
         try { target.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {}
       }
     }
 
-    setTimeout(positionCard, 100);
+    setTimeout(positionCard, 120);
 
     speak(step.title + '. ' + step.desc);
   }
