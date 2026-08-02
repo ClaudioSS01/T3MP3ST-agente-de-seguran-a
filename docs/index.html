@@ -3553,7 +3553,7 @@
                         <span class="egress-label">IP:</span>
                         <span class="egress-ip" id="egressIpValue">…</span>
                     </span>
-                    <button class="btn btn-secondary" onclick="if(window.t3mpTour)t3mpTour.start()" title="Take the guided tour" aria-label="Guided tour" style="font-weight:700;">?</button>
+                    <!-- Botão ? removido — substituído pelo botão flutuante do tour-pt.js -->
                     <button class="btn btn-secondary" onclick="openQuickActions()">⌘ Actions</button>
                     <button class="btn btn-primary" onclick="navigateTo('warroom')">⚔️ War Room</button>
                 </div>
@@ -27221,9 +27221,8 @@ Be specific and actionable. Format as structured JSON.`;
 })();
 </script>
 
-<!-- ═══════════ GUIDED TOUR (t3mpTour) — first-run video-game-style walkthrough ═══════════ -->
-<script>
-(function(){
+<!-- Tour antigo removido — substituído por tour-pt.js -->
+<!-- TOUR_REMOVED_START
   'use strict';
 
   // ── DOM: overlay layer (spotlight + card) and a floating re-launch button ──
@@ -27437,9 +27436,7 @@ Be specific and actionable. Format as structured JSON.`;
   try { relaunch.style.display = 'flex'; } catch (e) {}
 
   // Public API.
-  window.t3mpTour = { steps: steps, start: start, next: next, prev: prev, end: end, goto: goto, position: position };
-})();
-</script>
+TOUR_REMOVED_END -->
 <script>
   // ── Theme switcher ── reskins the whole UI via a data-theme attribute on <html>.
   (function () {
@@ -27483,5 +27480,11 @@ Be specific and actionable. Format as structured JSON.`;
     window.t3mpTheme = { apply: apply, themes: THEMES };
   })();
 </script>
+<!-- Camada de tradução PT-BR (não-invasiva, reversível). Remova esta linha para voltar ao inglês. -->
+<script src="i18n-pt.js"></script>
+<!-- Melhorias de UX: explicações por tela, traduções dinâmicas, renomeações -->
+<script src="ux-improve-pt.js"></script>
+<!-- Tour guiado em PT com TTS (substitui o tour antigo) -->
+<script src="tour-pt.js"></script>
 </body>
 </html>
