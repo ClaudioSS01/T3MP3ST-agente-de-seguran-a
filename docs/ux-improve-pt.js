@@ -2781,12 +2781,24 @@
     var toolBacked = (f.provenance || '').toLowerCase() === 'tool' && !!(f.evidence && String(f.evidence).trim());
 
     // ── Aba "O que" ──
+    var literal;
+    if (f.evidence && String(f.evidence).trim()) {
+      literal =
+        '<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#00ff88;margin:14px 0 4px">🔍 Valor / artefato literal capturado</div>' +
+        '<pre style="white-space:pre-wrap;word-break:break-word;font-size:12px;color:#9fd6c0;background:rgba(0,0,0,.4);padding:10px;border-radius:6px;max-height:220px;overflow:auto;border-left:3px solid #00ff88">' + escapeText(String(f.evidence)) + '</pre>';
+    } else {
+      literal =
+        '<div style="margin-top:14px;font-size:12.5px;line-height:1.6;color:#ffd0a0;background:rgba(255,170,0,.09);border:1px solid rgba(255,170,0,.32);border-radius:8px;padding:11px">' +
+        '⚠️ <strong>Não há um valor literal para mostrar.</strong> O texto acima é <em>tudo</em> que o sistema registrou sobre este achado. ' +
+        'Não existe um artefato concreto por trás (a chave em si, o token, a resposta do servidor) porque <strong>nenhuma ferramenta extraiu nada</strong> — ' +
+        'este achado foi apenas <strong>afirmado pela IA</strong> (veja a aba <em>Como / Prova</em>). Não é uma extração real; trate como um alerta a verificar, não como um dado capturado.</div>';
+    }
     var oque =
       '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><span class="ux-ev-sev" style="color:' + c + ';background:rgba(255,255,255,.05);font-size:11px">' + escapeText(sevLabel) + '</span><span style="font-size:15px;color:#e4edf2;font-weight:700">' + escapeText(f.title || '-') + '</span></div>' +
       '<table style="width:100%;border-collapse:collapse;font-size:13px">' +
       rcRow('Tipo', escapeText(typeLabel)) +
-      rcRow('O que foi encontrado', escapeText(f.detail || f.title || '-')) +
-      '</table>';
+      rcRow('Descrição', escapeText(f.detail || f.title || '-')) +
+      '</table>' + literal;
 
     // ── Aba "Onde" ──
     var onde =
