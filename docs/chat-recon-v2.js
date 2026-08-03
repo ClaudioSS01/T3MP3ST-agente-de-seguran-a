@@ -538,28 +538,544 @@
       } catch (e) {}
 
       step('');
-      step('✅ **Recon V2 TERMINADO.** Vá na aba **Cofre de Evidências** ou **Sala de Guerra → Etapa 4** para explorar todos os achados persistidos, filtrar por severidade e exportar Markdown.');
+      step('✅ **Recon V2 TERMINADO** — ' + allFindings.length + ' achados encontrados. Relatório completo abaixo. Clique em **📄 Baixar PDF** para exportar.');
+
+      // Guarda dados para o botão de PDF poder acessar
+      window.__t3lastRecon = { host: host, findings: allFindings, at: new Date().toISOString() };
 
       return { findings: allFindings, host: host };
     });
   }
 
   // ═══════════════════════════════════════════════
-  // Hook: monkey-patch do runReconFlow do chat-pt.js
+  // Detecção automática de URL/domínio no input do chat
+  // ═══════════════════════════════════════════════
+  function extractHostOrUrl(text) {
+    if (!text) return null;
+    var t = String(text).trim();
+    // URL http/https
+    var m = t.match(/https?:\/\/[^\s"'<>]+/i);
+    if (m) return m[0];
+    // Domínio (ex: example.com, sub.example.co.uk)
+    m = t.match(/\b((?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.){1,}[a-z]{2,24})\b/i);
+    if (m) return m[1];
+    // IPv4
+    m = t.match(/\b(\d{1,3}(?:\.\d{1,3}){3})\b/);
+    if (m) return m[1];
+    return null;
+  }
+  function isChatOnlyIntent(text) {
+    // Se o texto é uma pergunta pura ou saudação, NÃO trata como recon
+    var t = String(text || '').trim().toLowerCase();
+    if (!t) return true;
+    if (t.length < 4) return true;
+    // Se começa com pergunta clássica de chat E não tem URL, é chat
+    if (/^(oi|olá|ola|hey|hi|hello|quem é|quem eh|o que|what|como funciona|explica|explique|conta|me diga|me fala|help|ajuda)/i.test(t)) return true;
+    return false;
+  }
+
+  // ═══════════════════════════════════════════════
+  // Persistência das mensagens do V2 (localStorage)
+  // O chat-pt.js reseta o DOM quando volta pra aba Chat porque suas bolhas
+  // não estão no history interno dele. Persistimos e restauramos aqui.
+  // ═══════════════════════════════════════════════
+  var STORAGE_KEY = 't3rv2_messages_v1';
+  function loadMessages() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch (e) { return []; }
+  }
+  function saveMessage(msg) {
+    var arr = loadMessages();
+    arr.push(msg);
+    // Cap a 20 recons para não explodir localStorage
+    if (arr.length > 20) arr = arr.slice(-20);
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); } catch (e) {}
+  }
+  function updateLastMessage(patch) {
+    var arr = loadMessages();
+    if (!arr.length) return;
+    Object.assign(arr[arr.length - 1], patch);
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); } catch (e) {}
+  }
+
+  function restoreMessages() {
+    var msgs = document.getElementById('t3cMsgs');
+    if (!msgs) return;
+    var stored = loadMessages();
+    if (!stored.length) return;
+    // Se o chat mostra a tela vazia (chips de "Experimente"), limpa e mostra
+    // as mensagens salvas por cima.
+    if (msgs.querySelector('.t3c-empty')) msgs.innerHTML = '';
+    // Só restaura se ainda não estiverem lá (evita duplicar)
+    if (msgs.querySelector('[data-t3rv2-msg]')) return;
+    stored.forEach(function (m) {
+      renderStoredMessage(msgs, m);
+    });
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function renderStoredMessage(msgs, m) {
+    var user = document.createElement('div');
+    user.className = 't3c-msg user';
+    user.setAttribute('data-t3rv2-msg', '1');
+    user.innerHTML = '<div class="t3c-av">🧑‍💻</div><div class="t3c-bubble">' + esc(m.query) + '</div>';
+    msgs.appendChild(user);
+
+    var bot = document.createElement('div');
+    bot.className = 't3c-msg bot';
+    bot.setAttribute('data-t3rv2-msg', '1');
+    var bubble = document.createElement('div');
+    bubble.className = 't3c-bubble';
+    bubble.innerHTML = renderMarkdown(m.acc || '');
+    bot.innerHTML = '<div class="t3c-av">🎖️</div>';
+    bot.appendChild(bubble);
+    msgs.appendChild(bot);
+    if (m.result) appendDownloadButtons(bubble, m.result);
+  }
+
+  // ═══════════════════════════════════════════════
+  // UI: cria bolhas no chat sem depender do closure history do chat-pt.js
+  // ═══════════════════════════════════════════════
+  function runReconInChat(rawTarget) {
+    var target = extractHostOrUrl(rawTarget) || rawTarget;
+    var msgs = document.getElementById('t3cMsgs');
+    if (!msgs) { alert('Chat não está pronto.'); return; }
+    // Limpa tela de boas-vindas
+    if (msgs.querySelector('.t3c-empty')) msgs.innerHTML = '';
+
+    // Cria bolha do usuário + resposta do bot
+    var userDiv = document.createElement('div');
+    userDiv.className = 't3c-msg user';
+    userDiv.setAttribute('data-t3rv2-msg', '1');
+    userDiv.innerHTML = '<div class="t3c-av">🧑‍💻</div><div class="t3c-bubble">' +
+      esc(rawTarget) + '</div>';
+    msgs.appendChild(userDiv);
+
+    var botDiv = document.createElement('div');
+    botDiv.className = 't3c-msg bot';
+    botDiv.setAttribute('data-t3rv2-msg', '1');
+    var bubbleId = 't3cV2Bubble_' + Math.random().toString(36).slice(2,8);
+    botDiv.innerHTML = '<div class="t3c-av">🎖️</div><div class="t3c-bubble" id="' + bubbleId + '"></div>';
+    msgs.appendChild(botDiv);
+    msgs.scrollTop = msgs.scrollHeight;
+
+    // Salva a entrada no storage
+    saveMessage({ query: rawTarget, target: target, acc: '', result: null, at: new Date().toISOString() });
+
+    var bubble = document.getElementById(bubbleId);
+    var acc = '';
+    var lastSave = 0;
+    function step(s) {
+      acc += s + '\n';
+      bubble.innerHTML = renderMarkdown(acc);
+      msgs.scrollTop = msgs.scrollHeight;
+      // Throttle: salva no localStorage a cada 500ms
+      var now = Date.now();
+      if (now - lastSave > 500) {
+        lastSave = now;
+        updateLastMessage({ acc: acc });
+      }
+    }
+    return fullReconV2(target, step)
+      .then(function (result) {
+        var b = document.getElementById(bubbleId);
+        if (b) appendDownloadButtons(b, result);
+        // Salvamento final
+        updateLastMessage({ acc: acc, result: result });
+      })
+      .catch(function (e) {
+        step('❌ Erro: ' + (e && e.message || e));
+        updateLastMessage({ acc: acc, error: String((e && e.message) || e) });
+      });
+  }
+
+  function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function renderMarkdown(s) {
+    return esc(s)
+      .replace(/```\n?([\s\S]*?)```/g, '<pre class="t3c-code">$1</pre>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/^### (.+)$/gm, '<h4 style="margin:8px 0 4px;color:#2fffd2">$1</h4>')
+      .replace(/^## (.+)$/gm, '<h3 style="margin:10px 0 4px;color:#2fffd2">$1</h3>')
+      .replace(/^---$/gm, '<hr style="border:0;border-top:1px solid #2a3a48;margin:8px 0">')
+      .replace(/^\s{2}- (.+)$/gm, '<div style="margin-left:20px">• $1</div>')
+      .replace(/^- (.+)$/gm, '<div style="margin-left:8px">• $1</div>')
+      .replace(/\n/g, '<br>');
+  }
+
+  // ═══════════════════════════════════════════════
+  // Interceptação: URL no input dispara Recon V2 automaticamente
+  // ═══════════════════════════════════════════════
+  function installInputInterceptor() {
+    // Capture: rodamos ANTES dos handlers do chat-pt.js
+    document.addEventListener('click', function (e) {
+      var t = e.target;
+      if (!t || (t.id !== 't3cSend' && !(t.closest && t.closest('#t3cSend')))) return;
+      var inp = document.getElementById('t3cInput');
+      if (!inp) return;
+      var text = (inp.value || '').trim();
+      if (!text) return;
+      var target = extractHostOrUrl(text);
+      if (target && !isChatOnlyIntent(text)) {
+        e.stopImmediatePropagation();
+        e.preventDefault();
+        inp.value = '';
+        runReconInChat(text);
+      }
+    }, true);
+
+    document.addEventListener('keydown', function (e) {
+      if (!e.target || e.target.id !== 't3cInput') return;
+      if (e.key !== 'Enter' || e.shiftKey) return;
+      var text = (e.target.value || '').trim();
+      if (!text) return;
+      var target = extractHostOrUrl(text);
+      if (target && !isChatOnlyIntent(text)) {
+        e.stopImmediatePropagation();
+        e.preventDefault();
+        e.target.value = '';
+        runReconInChat(text);
+      }
+    }, true);
+  }
+
+  // ═══════════════════════════════════════════════
+  // Botões: Baixar PDF, Baixar Markdown
+  // ═══════════════════════════════════════════════
+  function appendDownloadButtons(botDiv, reconResult) {
+    if (!reconResult || !reconResult.findings) return;
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'margin-top:12px;display:flex;gap:8px;flex-wrap:wrap';
+    wrap.innerHTML =
+      '<button class="t3c-btn t3rv2-dl-pdf" style="background:linear-gradient(135deg,#2563eb,#1e40af);color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-weight:700">📄 Baixar PDF</button>' +
+      '<button class="t3c-btn t3rv2-dl-md" style="background:rgba(47,255,210,.1);color:#2fffd2;border:1px solid rgba(47,255,210,.35);padding:8px 14px;border-radius:8px;cursor:pointer;font-weight:700">📝 Baixar Markdown</button>' +
+      '<button class="t3c-btn t3rv2-copy" style="background:rgba(255,255,255,.05);color:#a8c0cc;border:1px solid rgba(255,255,255,.15);padding:8px 14px;border-radius:8px;cursor:pointer">📋 Copiar</button>';
+    botDiv.appendChild(wrap);
+    wrap.querySelector('.t3rv2-dl-pdf').addEventListener('click', function () { downloadPdf(reconResult); });
+    wrap.querySelector('.t3rv2-dl-md').addEventListener('click', function () { downloadMarkdown(reconResult); });
+    wrap.querySelector('.t3rv2-copy').addEventListener('click', function () {
+      navigator.clipboard.writeText(buildMarkdown(reconResult)).then(function () {
+        wrap.querySelector('.t3rv2-copy').textContent = '✓ Copiado';
+      });
+    });
+  }
+
+  // ═══════════════════════════════════════════════
+  // Markdown builder (usado pelo download .md e copy)
+  // ═══════════════════════════════════════════════
+  function buildMarkdown(r) {
+    var out = [];
+    out.push('# Dossiê de Cibersegurança — ' + r.host);
+    out.push('');
+    out.push('> Análise passiva/semi-ativa · ' + new Date(r.at || Date.now()).toLocaleString('pt-BR'));
+    out.push('> Motor: T3MP3ST Recon V2 (8 fases · 60 pontos)');
+    out.push('');
+    var groups = { ALTO: [], 'MÉDIO': [], BAIXO: [], INFO: [] };
+    r.findings.forEach(function (f) { if (groups[f.sev]) groups[f.sev].push(f); });
+    out.push('## Sumário');
+    out.push('');
+    out.push('| Severidade | Qtd |');
+    out.push('|---|---|');
+    out.push('| 🔴 ALTO | ' + groups.ALTO.length + ' |');
+    out.push('| 🟠 MÉDIO | ' + groups['MÉDIO'].length + ' |');
+    out.push('| 🟡 BAIXO | ' + groups.BAIXO.length + ' |');
+    out.push('| 🟢 INFO | ' + groups.INFO.length + ' |');
+    out.push('');
+    ['ALTO', 'MÉDIO', 'BAIXO', 'INFO'].forEach(function (sev) {
+      if (!groups[sev].length) return;
+      var icon = { ALTO: '🔴', 'MÉDIO': '🟠', BAIXO: '🟡', INFO: '🟢' }[sev];
+      out.push('## ' + icon + ' ' + sev + ' (' + groups[sev].length + ')');
+      out.push('');
+      groups[sev].forEach(function (f) {
+        out.push('- **[' + f.phase + ']** ' + f.msg);
+      });
+      out.push('');
+    });
+    return out.join('\n');
+  }
+
+  function downloadMarkdown(r) {
+    var md = buildMarkdown(r);
+    var blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+    downloadBlob(blob, 'dossie_' + r.host + '_' + new Date().toISOString().slice(0,10) + '.md');
+  }
+
+  function downloadBlob(blob, filename) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+  }
+
+  // ═══════════════════════════════════════════════
+  // PDF client-side com jsPDF (lazy load do CDN)
+  // ═══════════════════════════════════════════════
+  var JSPDF_URLS = [
+    'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js',
+    'https://unpkg.com/jspdf@2.5.2/dist/jspdf.umd.min.js'
+  ];
+  function loadJsPdf() {
+    if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve(window.jspdf.jsPDF);
+    return JSPDF_URLS.reduce(function (p, url) {
+      return p.catch(function () {
+        return new Promise(function (resolve, reject) {
+          var s = document.createElement('script');
+          s.src = url;
+          s.onload = function () {
+            if (window.jspdf && window.jspdf.jsPDF) resolve(window.jspdf.jsPDF);
+            else reject(new Error('jsPDF não expôs jspdf.jsPDF'));
+          };
+          s.onerror = function () { reject(new Error('falha carregar ' + url)); };
+          document.head.appendChild(s);
+        });
+      });
+    }, Promise.reject(new Error('start')));
+  }
+
+  function downloadPdf(r) {
+    loadJsPdf().then(function (jsPDF) {
+      var doc = new jsPDF({ format: 'a4', unit: 'pt' });
+      // Cores MedSimples
+      var C_PRIMARY = [37, 99, 235];
+      var C_DARK = [30, 64, 175];
+      var C_TEXT = [17, 24, 39];
+      var C_MUTED = [107, 114, 128];
+      var C_RED_BG = [254, 226, 226], C_RED_FG = [220, 38, 38];
+      var C_ORANGE_BG = [255, 247, 237], C_ORANGE_FG = [234, 88, 12];
+      var C_YELLOW_BG = [254, 252, 232], C_YELLOW_FG = [202, 138, 4];
+      var C_GREEN_BG = [240, 253, 244], C_GREEN_FG = [22, 163, 74];
+      var C_TERM_BG = [31, 41, 55], C_TERM_FG = [229, 231, 235];
+
+      var PAGE_W = doc.internal.pageSize.getWidth();
+      var PAGE_H = doc.internal.pageSize.getHeight();
+      var MARGIN = 40;
+
+      function sevColors(sev) {
+        return { ALTO: [C_RED_BG, C_RED_FG], 'MÉDIO': [C_ORANGE_BG, C_ORANGE_FG],
+                 BAIXO: [C_YELLOW_BG, C_YELLOW_FG], INFO: [C_GREEN_BG, C_GREEN_FG] }[sev] || [[220,220,220],[100,100,100]];
+      }
+
+      // ─── CAPA ───
+      doc.setFillColor.apply(doc, C_DARK);
+      doc.rect(0, 0, PAGE_W, 120, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(28);
+      doc.text('MedSimples', PAGE_W/2, 75, { align: 'center' });
+
+      doc.setTextColor.apply(doc, C_TEXT);
+      doc.setFontSize(22);
+      doc.text('DOSSIÊ DE CIBERSEGURANÇA', PAGE_W/2, 200, { align: 'center' });
+
+      doc.setTextColor.apply(doc, C_PRIMARY);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'normal');
+      doc.text(r.host, PAGE_W/2, 230, { align: 'center' });
+
+      doc.setTextColor.apply(doc, C_MUTED);
+      doc.setFontSize(10);
+      doc.text('Motor T3MP3ST Recon V2 · 8 fases · ' + r.findings.length + ' achados', PAGE_W/2, 250, { align: 'center' });
+      doc.text(new Date(r.at || Date.now()).toLocaleString('pt-BR'), PAGE_W/2, 268, { align: 'center' });
+
+      // Badge CONFIDENCIAL
+      doc.setFillColor.apply(doc, C_RED_FG);
+      doc.roundedRect(PAGE_W/2 - 70, 320, 140, 30, 4, 4, 'F');
+      doc.setTextColor(255,255,255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.text('CONFIDENCIAL', PAGE_W/2, 340, { align: 'center' });
+
+      doc.setTextColor.apply(doc, C_MUTED);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.text('Análise passiva/semi-ativa — nenhum payload de ataque foi enviado.', PAGE_W/2, 380, { align: 'center' });
+
+      // ─── SUMÁRIO ───
+      doc.addPage();
+      var y = MARGIN;
+
+      doc.setTextColor.apply(doc, C_PRIMARY);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.text('Sumário Executivo', MARGIN, y);
+      y += 24;
+
+      var groups = { ALTO: [], 'MÉDIO': [], BAIXO: [], INFO: [] };
+      r.findings.forEach(function (f) { if (groups[f.sev]) groups[f.sev].push(f); });
+
+      doc.setTextColor.apply(doc, C_TEXT);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      var summary = 'Analise executada em ' + new Date(r.at || Date.now()).toLocaleString('pt-BR') +
+                    ' contra ' + r.host + '. Cobre 8 fases passivas: HTTP+Headers, DNS+DMARC/SPF, ' +
+                    'Shodan InternetDB, Certificate Transparency, common paths, JS bundle secrets, ' +
+                    'HTML markers e TLS. Total: ' + r.findings.length + ' achados identificados.';
+      var summaryLines = doc.splitTextToSize(summary, PAGE_W - 2*MARGIN);
+      doc.text(summaryLines, MARGIN, y);
+      y += summaryLines.length * 13 + 15;
+
+      // Placar
+      var scoreRows = [
+        ['🔴 ALTO', groups.ALTO.length, C_RED_BG],
+        ['🟠 MÉDIO', groups['MÉDIO'].length, C_ORANGE_BG],
+        ['🟡 BAIXO', groups.BAIXO.length, C_YELLOW_BG],
+        ['🟢 INFO', groups.INFO.length, C_GREEN_BG],
+      ];
+      // header
+      doc.setFillColor.apply(doc, C_DARK);
+      doc.rect(MARGIN, y, PAGE_W - 2*MARGIN, 22, 'F');
+      doc.setTextColor(255,255,255);
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(10);
+      doc.text('Severidade', MARGIN + 10, y + 15);
+      doc.text('Qtd', MARGIN + 200, y + 15);
+      y += 22;
+      scoreRows.forEach(function (row) {
+        doc.setFillColor.apply(doc, row[2]);
+        doc.rect(MARGIN, y, PAGE_W - 2*MARGIN, 22, 'F');
+        doc.setTextColor.apply(doc, C_TEXT);
+        doc.setFont('helvetica','normal');
+        doc.text(String(row[0]), MARGIN + 10, y + 15);
+        doc.setFont('helvetica','bold');
+        doc.text(String(row[1]), MARGIN + 200, y + 15);
+        y += 22;
+      });
+      y += 20;
+
+      // ─── ACHADOS DETALHADOS ───
+      doc.setTextColor.apply(doc, C_PRIMARY);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.text('Achados Detalhados', MARGIN, y);
+      y += 20;
+
+      ['ALTO', 'MÉDIO', 'BAIXO', 'INFO'].forEach(function (sev) {
+        var arr = groups[sev];
+        if (!arr.length) return;
+        var cols = sevColors(sev);
+        var bg = cols[0], fg = cols[1];
+
+        // Se não cabe, nova página
+        if (y > PAGE_H - 120) { doc.addPage(); y = MARGIN; }
+
+        doc.setTextColor.apply(doc, fg);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.text(sev + ' (' + arr.length + ')', MARGIN, y);
+        y += 16;
+
+        arr.forEach(function (f) {
+          var text = '[' + f.phase + '] ' + f.msg;
+          var lines = doc.splitTextToSize(text, PAGE_W - 2*MARGIN - 20);
+          var boxH = lines.length * 12 + 12;
+          if (y + boxH > PAGE_H - MARGIN) { doc.addPage(); y = MARGIN; }
+          // Card
+          doc.setFillColor.apply(doc, bg);
+          doc.rect(MARGIN, y, PAGE_W - 2*MARGIN, boxH, 'F');
+          // Borda esquerda colorida
+          doc.setFillColor.apply(doc, fg);
+          doc.rect(MARGIN, y, 4, boxH, 'F');
+          // Texto
+          doc.setTextColor.apply(doc, C_TEXT);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(9);
+          doc.text(lines, MARGIN + 12, y + 14);
+          y += boxH + 6;
+        });
+        y += 10;
+      });
+
+      // ─── FOOTER em todas as páginas ───
+      var pageCount = doc.internal.getNumberOfPages();
+      for (var i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        if (i > 1) {
+          doc.setDrawColor.apply(doc, C_PRIMARY);
+          doc.setLineWidth(0.5);
+          doc.line(MARGIN, PAGE_H - 30, PAGE_W - MARGIN, PAGE_H - 30);
+          doc.setTextColor.apply(doc, C_MUTED);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(7);
+          doc.text('CONFIDENCIAL — ' + r.host, MARGIN, PAGE_H - 18);
+          doc.text('Página ' + i + ' de ' + pageCount, PAGE_W - MARGIN, PAGE_H - 18, { align: 'right' });
+        }
+      }
+
+      var filename = 'dossie_' + r.host.replace(/[^a-z0-9.-]/gi,'_') + '_' + new Date().toISOString().slice(0,10) + '.pdf';
+      doc.save(filename);
+    }).catch(function (e) {
+      alert('❌ Falha ao carregar jsPDF do CDN. Erro: ' + e.message + '\n\nAlternativa: use "Baixar Markdown" e converta manualmente, ou verifique conexão.');
+    });
+  }
+
+  // ═══════════════════════════════════════════════
+  // Boot: injeta CSS, botão e interceptador
   // ═══════════════════════════════════════════════
   function attach() {
     if (!window.__t3chat) { setTimeout(attach, 300); return; }
-    // Sinaliza que v2 está ativo
-    window.__t3reconV2 = { fullReconV2: fullReconV2, VERSION: '2.0.0' };
-
-    // Substitui o runReconFlow do chat-pt.js pelo motor v2
-    // O chat-pt.js chama runReconFlow(target); nós envolvemos com nossa versão.
-    var originalRun = window.__t3chat_runReconFlow;
-    // O chat-pt.js NÃO expõe runReconFlow globalmente, então precisamos interceptar
-    // via observer: quando uma mensagem "🎯 **Recon REAL**" aparece, cancelamos e
-    // rodamos o v2. Alternativa mais limpa: fornecer um botão "Recon V2" no header
-    // do chat.
+    window.__t3reconV2 = {
+      fullReconV2: fullReconV2, VERSION: '2.2.0',
+      downloadPdf: downloadPdf, restore: restoreMessages,
+      clear: function () { localStorage.removeItem(STORAGE_KEY); location.reload(); }
+    };
+    injectStyles();
     injectV2Button();
+    installInputInterceptor();
+    setTimeout(restoreMessages, 500);
+    installChatOpenObserver();
+    injectClearButton();
+  }
+
+  // Restaura mensagens toda vez que a aba Chat vira ativa (o chat-pt.js
+  // reseta o DOM ao voltar para page-chat)
+  function installChatOpenObserver() {
+    var page = document.getElementById('page-chat');
+    if (!page) { setTimeout(installChatOpenObserver, 500); return; }
+    // Observa quando page-chat vira 'active'
+    new MutationObserver(function () {
+      if (page.classList.contains('active')) {
+        setTimeout(restoreMessages, 100);
+      }
+    }).observe(page, { attributes: true, attributeFilter: ['class'] });
+
+    // Também escuta cliques na nav "Chat" — o chat-pt.js pode reset antes do observer
+    var navChat = document.querySelector('.nav-item[data-page="chat"]');
+    if (navChat) {
+      navChat.addEventListener('click', function () {
+        setTimeout(restoreMessages, 200);
+      });
+    }
+  }
+
+  function injectClearButton() {
+    var bar = document.querySelector('#page-chat .t3c-bar');
+    if (!bar || bar.querySelector('#t3rv2ClearBtn')) return;
+    var btn = document.createElement('button');
+    btn.className = 't3c-btn';
+    btn.id = 't3rv2ClearBtn';
+    btn.title = 'Limpar histórico de recons persistidos (localStorage)';
+    btn.textContent = '🧹 Limpar recons';
+    btn.style.cssText = 'background:rgba(255,80,80,.08);color:#ff9090;border:1px solid rgba(255,80,80,.3)';
+    btn.addEventListener('click', function () {
+      if (!confirm('Limpar histórico de recons persistidos?')) return;
+      localStorage.removeItem(STORAGE_KEY);
+      var msgs = document.getElementById('t3cMsgs');
+      if (msgs) msgs.querySelectorAll('[data-t3rv2-msg]').forEach(function (el) { el.remove(); });
+    });
+    bar.appendChild(btn);
+  }
+
+  function injectStyles() {
+    if (document.getElementById('t3rv2-styles')) return;
+    var s = document.createElement('style');
+    s.id = 't3rv2-styles';
+    s.textContent = [
+      '#page-chat .t3c-bubble pre.t3c-code{background:#1f2937;color:#e5e7eb;padding:10px 12px;border-radius:8px;font-family:Courier,monospace;font-size:11.5px;line-height:1.4;overflow-x:auto;margin:6px 0;white-space:pre-wrap;word-break:break-word}',
+      '#page-chat .t3c-bubble h3,#page-chat .t3c-bubble h4{color:#2fffd2}',
+      '.t3rv2-dl-pdf:hover{filter:brightness(1.15)}',
+      '.t3rv2-dl-md:hover{background:rgba(47,255,210,.2)!important}',
+    ].join('\n');
+    document.head.appendChild(s);
   }
 
   function injectV2Button() {
@@ -568,45 +1084,15 @@
     var btn = document.createElement('button');
     btn.className = 't3c-btn';
     btn.id = 't3cReconV2Btn';
-    btn.title = 'Recon V2 — 60 pontos passivos (DNS, crt.sh, Shodan, paths, secrets, TLS)';
+    btn.title = 'Forçar Recon V2 (também dispara automaticamente quando você cola uma URL/domínio)';
     btn.textContent = '🎯 Recon V2';
     btn.addEventListener('click', function () {
       var inp = document.getElementById('t3cInput');
       var raw = (inp && inp.value || '').trim();
       var target = raw || prompt('Alvo (URL ou host):');
       if (!target) return;
-      target = target.replace(/^\s*(faz|analisa|recon|scan)\s+(um\s+recon\s+em\s+)?/i, '').trim();
-      // Injeta como uma mensagem no chat e chama o motor
-      var msgs = document.getElementById('t3cMsgs');
-      if (!msgs) { alert('Aba Chat não está pronta.'); return; }
-      // Fake user message + assistant bubble
-      var histKey = 'history';
-      // Usar o "history" interno do chat via window.__t3chat.push?
-      // Como chat-pt.js encapsula history em closure, apenas invocamos direto usando setLast trick.
-      // Mais simples: usar innerHTML e criar as bolhas manualmente.
-      var userDiv = document.createElement('div');
-      userDiv.className = 't3c-msg user';
-      userDiv.innerHTML = '<div class="t3c-av">🧑‍💻</div><div class="t3c-bubble">🎯 Recon V2 em ' + target + '</div>';
-      msgs.appendChild(userDiv);
-      var botDiv = document.createElement('div');
-      botDiv.className = 't3c-msg bot';
-      botDiv.innerHTML = '<div class="t3c-av">🎖️</div><div class="t3c-bubble" id="t3cV2Bubble"></div>';
-      msgs.appendChild(botDiv);
-      var bubble = document.getElementById('t3cV2Bubble');
-      var acc = '';
-      function step(s) {
-        acc += s + '\n';
-        bubble.innerHTML = acc
-          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-          .replace(/`([^`]+)`/g, '<code>$1</code>')
-          .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-          .replace(/\n/g, '<br>');
-        msgs.scrollTop = msgs.scrollHeight;
-      }
-      inp.value = '';
-      fullReconV2(target, step).catch(function (e) {
-        step('❌ Erro: ' + (e && e.message || e));
-      });
+      if (inp) inp.value = '';
+      runReconInChat(target);
     });
     bar.appendChild(btn);
   }
