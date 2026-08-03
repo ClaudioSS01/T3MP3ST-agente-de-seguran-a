@@ -73,9 +73,12 @@
 
   // ═══════════════════════════════════════════════
   // Módulo 1: DNS enrichment via dns.google (proxy via curl)
+  // NOTA: server rejeita comandos com % ou & (shell control chars).
+  // Solução: usar -G --data-urlencode e colocar URL por ÚLTIMO (server pega
+  // último arg como target).
   // ═══════════════════════════════════════════════
   function dnsQuery(host, type) {
-    var cmd = "curl -s --max-time 10 https://dns.google/resolve?name=" + host + "&type=" + type;
+    var cmd = 'curl -s --max-time 10 --data-urlencode "name=' + host + '" --data-urlencode "type=' + type + '" -G https://dns.google/resolve';
     return runTool(cmd, 'dns.google').then(function (r) {
       var out = outputOf(r);
       try { return JSON.parse(out); } catch (e) { return null; }
@@ -118,20 +121,26 @@
   // ═══════════════════════════════════════════════
   function reconCertTransparency(host) {
     var rootDomain = host.split('.').slice(-2).join('.');
-    var cmd = 'curl -s --max-time 15 "https://crt.sh/?q=%25.' + rootDomain + '&output=json"';
-    return runTool(cmd, 'crt.sh').then(function (r) {
+    // NOTA: `q=%.<dom>` (wildcard LIKE) causa 502 Bad Gateway no crt.sh (bug deles).
+    // Solução: buscar pelo domínio literal — o crt.sh retorna todos certs contendo
+    // essa string no name_value (SANs) e nós extraímos os subdomínios do JSON.
+    var cmd = 'curl -s --max-time 20 --data-urlencode "q=' + rootDomain + '" --data-urlencode "output=json" -G https://crt.sh/';
+    return runTool(cmd, 'crt.sh', 25000).then(function (r) {
       var out = outputOf(r);
+      // Se o crt.sh retornou 502 (HTML), o output começa com "<html>"
+      if (/^\s*<html/i.test(out)) return { count: 0, subdomains: [], error: 'crt.sh retornou 502 Bad Gateway (serviço instável — tente de novo em 1 min)' };
+      if (!out.trim()) return { count: 0, subdomains: [], error: 'crt.sh não retornou dados' };
       try {
         var arr = JSON.parse(out);
         var subs = new Set();
         arr.forEach(function (row) {
           String(row.name_value || '').split(/\n/).forEach(function (n) {
             var s = n.trim().toLowerCase();
-            if (s && !s.startsWith('*.') && s.endsWith('.' + rootDomain)) subs.add(s);
+            if (s && !s.startsWith('*.') && s.endsWith(rootDomain)) subs.add(s);
           });
         });
         return { count: subs.size, subdomains: Array.from(subs).sort(), rootDomain: rootDomain };
-      } catch (e) { return { count: 0, subdomains: [], error: 'crt.sh parse falhou' }; }
+      } catch (e) { return { count: 0, subdomains: [], error: 'crt.sh parse falhou (JSON inválido)' }; }
     });
   }
 
@@ -215,25 +224,40 @@
     '/backup.zip', '/backup.tar.gz', '/database.sql', '/dump.sql',
   ];
 
+  // NOTA: server rejeita `-w "%{http_code}"` (% shell char), então usamos `-sI` e
+  // parseamos a primeira linha do header ("HTTP/1.1 200 OK") + Content-Length.
+  function parseHeadResponse(out) {
+    if (!out) return { code: '000', size: 0, ct: '' };
+    var lines = String(out).split(/\r?\n/);
+    var firstLine = lines[0] || '';
+    var m = firstLine.match(/HTTP\/[\d.]+\s+(\d{3})/);
+    var code = m ? m[1] : '000';
+    var size = 0, ct = '';
+    for (var i = 1; i < lines.length; i++) {
+      var lm = lines[i].match(/^Content-Length:\s*(\d+)/i);
+      if (lm) size = parseInt(lm[1], 10);
+      var cm = lines[i].match(/^Content-Type:\s*([^\r\n;]+)/i);
+      if (cm) ct = cm[1].trim();
+    }
+    return { code: code, size: size, ct: ct };
+  }
+
   function reconCommonPaths(url) {
     var host = hostOf(url);
-    // Primeiro: pegar tamanho do 404 (index de SPA) para saber quando é fallback
-    return runTool('curl -s -o /dev/null -w "%{http_code}|%{size_download}" --max-time 8 ' + urlOf(host) + '/__t3_probe_' + Math.random().toString(36).slice(2, 8), host)
+    // Probe SPA fallback com path aleatório
+    var probePath = '/__t3_probe_' + Math.random().toString(36).slice(2, 8);
+    return runTool('curl -sI --max-time 8 ' + urlOf(host) + probePath, host)
       .then(function (probe) {
-        var probeOut = outputOf(probe);
-        var probeParts = probeOut.split('|');
-        var probeSize = parseInt(probeParts[1], 10) || 0;
-        var probeCode = probeParts[0];
+        var probeParsed = parseHeadResponse(outputOf(probe));
+        var probeSize = probeParsed.size;
+        var probeCode = probeParsed.code;
         var spaFallback = probeCode === '200' && probeSize > 100;
-        // Batch curl para todos os paths
         var checks = COMMON_PATHS.map(function (p) {
-          var cmd = 'curl -s -o /dev/null -w "%{http_code}|%{size_download}|%{content_type}" --max-time 6 ' + urlOf(host) + p;
+          var cmd = 'curl -sI --max-time 6 ' + urlOf(host) + p;
           return runTool(cmd, host).then(function (r) {
-            var out = outputOf(r).trim();
-            var parts = out.split('|');
-            var code = parts[0], size = parseInt(parts[1], 10) || 0, ct = parts[2] || '';
-            var isFallback = spaFallback && code === '200' && Math.abs(size - probeSize) < 50;
-            return { path: p, code: code, size: size, ct: ct, fallback: isFallback };
+            var parsed = parseHeadResponse(outputOf(r));
+            var isFallback = spaFallback && parsed.code === '200' && Math.abs(parsed.size - probeSize) < 50;
+            return { path: p, code: parsed.code, size: parsed.size, ct: parsed.ct, fallback: isFallback };
           });
         });
         return Promise.all(checks).then(function (results) {
