@@ -48,9 +48,20 @@ Carregados via `<script>` no fim do `index.html`:
 ### `tour-pt.js` (~520 linhas)
 - Tour guiado por tela com TTS (pt-BR), botão flutuante "?". Auto-launch desativado (causava overlay escuro). Substitui o tour antigo (comentado no `index.html`).
 
-### `chat-pt.js` (~330 linhas)
+### `chat-pt.js` (~480 linhas)
 - **Aba "Chat"** (acima de Sala de Guerra): conversa com o "Comandante" (LLM local via Ollama direto, com histórico + streaming; fallback `/api/llm/chat`). **Listar / trocar / baixar modelos** do Ollama.
-- v1 = chat consultivo. **Pendente (v2):** ligar o Chat ao endpoint real de recon (`/api/tools/recon` / curl+DNS) para o agente executar de verdade.
+- **Motor de Recon REAL (Chat → executa ferramentas):** detecta alvo + intenção → executa ferramentas de verdade pelo backend e mostra a saída literal + análise do LLM.
+  - Micro-fluxo (orquestração determinística + LLM só em micro-tarefas de interpretação).
+  - Fluxo de aprovação testado: `execute` → 403 → `authorize-target` → **retry com `approvalId` no corpo** → 200 (o `findApproval` do server só olha o approvalId do corpo).
+  - `curl` (headers HTTP) funciona hoje; `nmap` entra automático quando instalado (degradação graciosa detecta `spawn nmap ENOENT`).
+  - Testado (`test-chat-recon.mjs`): 12/12 — detecção 8/8, curl real 3/3 (headers reais).
+
+## 3.1. Arsenal completo ligado (`T3MP3ST_FULL_ARSENAL=true`)
+
+- Flag adicionada em **`~/.t3mp3st/.env`** e no **launcher** (`$env:T3MP3ST_FULL_ARSENAL='true'`). Reversível: remover as duas.
+- Efeito: nas MISSÕES, os operadores passam a armar os adapters opt-in (nuclei, httpx, naabu, katana, ffuf, gobuster, feroxbuster, nikto, dalfox, sqlmap, semgrep, gitleaks, trivy, etc.). **Ainda exigem: (a) o CLI instalado, (b) aprovação por chamada** (portão de escopo). Metasploit/hydra são approval-gated + dangerous.
+- Testado (`test-arsenal.mjs`, 9/9): servidor saudável pós-restart, LLM conectado, e o whitelist do `/api/tools/execute` **aceita** nuclei/httpx/whatweb/nikto/sqlmap/gobuster (todos pedem aprovação = prontos p/ quando instalar). Catálogo: **68 de 73 command-ready** (35 safe_command + 33 receipt_required).
+- ⚠️ Ligar a flag NÃO instala nada nem "arma" nada perigoso sozinho — só deixa o catálogo pronto. As ferramentas só rodam com CLI instalado + você aprovando.
 
 ## 4. Diagnósticos importantes
 
