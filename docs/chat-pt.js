@@ -431,7 +431,11 @@
         step('**▶ Portas (nmap):** `nmap -F ' + host + '`');
         return runTool('nmap -F ' + host, host).then(function (nmapRes) {
           var nmapTxt;
-          if (notInstalled(nmapRes)) { nmapTxt = 'ℹ️ nmap não está instalado — pulei o scan de portas. Instale (`winget install Insecure.Nmap`) e ele entra automático.'; }
+          if (notInstalled(nmapRes)) {
+            nmapTxt = 'ℹ️ **nmap não instalado** — pulei o scan de portas.\n' +
+              '📥 nmap precisa de admin: `winget install Insecure.Nmap` (aprove o UAC/Npcap).\n' +
+              '_(Ferramentas sem admin — nuclei, httpx, sqlmap — use o auto-instalador: `powershell $HOME\\install-t3mp3st-tool.ps1 <nome>`, depois reinicie o servidor pelo launcher.)_';
+          }
           else { nmapTxt = '```\n' + toolText(nmapRes) + '\n```'; }
           step(nmapTxt);
           step('');

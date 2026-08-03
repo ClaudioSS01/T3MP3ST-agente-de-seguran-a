@@ -63,6 +63,16 @@ Carregados via `<script>` no fim do `index.html`:
 - Testado (`test-arsenal.mjs`, 9/9): servidor saudável pós-restart, LLM conectado, e o whitelist do `/api/tools/execute` **aceita** nuclei/httpx/whatweb/nikto/sqlmap/gobuster (todos pedem aprovação = prontos p/ quando instalar). Catálogo: **68 de 73 command-ready** (35 safe_command + 33 receipt_required).
 - ⚠️ Ligar a flag NÃO instala nada nem "arma" nada perigoso sozinho — só deixa o catálogo pronto. As ferramentas só rodam com CLI instalado + você aprovando.
 
+## 3.2. Auto-instalador de ferramentas (`~/install-t3mp3st-tool.ps1`)
+
+Instala ferramentas **sob demanda, por ferramenta** (só o que vai usar), sem admin p/ a maioria. Fontes OFICIAIS.
+- `install-t3mp3st-tool.ps1 list` — mostra o estado de cada uma.
+- `install-t3mp3st-tool.ps1 nuclei` — instala uma. `... all` — todas as sem-admin.
+- Métodos: **pd** (release oficial GitHub do ProjectDiscovery: httpx/nuclei/naabu/katana — resolve a última versão pelo redirect `/releases/latest`, SEM api.github.com), **winget** (ffuf), **git-python** (sqlmap via git clone + wrapper `sqlmap.cmd`, usa o Python 3.11 do PC), **winget-admin** (nmap — avisa que precisa de admin/Npcap).
+- Instala em `~/.t3mp3st-tools/bin` e adiciona ao PATH do usuário. O **launcher** prepende esse bin ao PATH do servidor.
+- Testado: `nuclei` instalado do zero (v3.11.0, release oficial) → servidor passou a achá-lo (`/api/tools/execute nuclei` deixou de dar ENOENT). httpx já estava.
+- ⚠️ Honestidade: NÃO é "instala sozinho no meio da chamada pelo navegador" — isso exigiria o servidor baixar+executar binários da internet sob demanda (risco de segurança). É um comando por ferramenta; o Chat mostra o comando exato quando falta. nmap continua precisando de admin.
+
 ## 4. Diagnósticos importantes
 
 - **"Could not connect to local LLM"** = Ollama não estava rodando (não auto-sobe após reboot). Resolvido; launcher agora garante.
