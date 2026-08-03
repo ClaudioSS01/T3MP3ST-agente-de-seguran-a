@@ -412,6 +412,35 @@
     return true;
   }
 
+  // ═══════════════════════════════════════════════
+  // Chat como aba padrão no boot inicial (apenas uma vez)
+  // ═══════════════════════════════════════════════
+  var didInitialNav = false;
+  function navigateToChatOnBoot() {
+    if (didInitialNav) return;
+    var chatNav = document.querySelector('.nav-item[data-page="chat"]');
+    var chatPage = document.getElementById('page-chat');
+    if (!chatNav || !chatPage) return;
+    // Preferência 1: __t3chat.open() (do chat-pt.js) — atualiza título E marca ativa
+    if (window.__t3chat && typeof window.__t3chat.open === 'function') {
+      try { window.__t3chat.open(); didInitialNav = true; return; } catch (e) {}
+    }
+    // Preferência 2: window.navigateTo do app original
+    if (typeof window.navigateTo === 'function') {
+      try {
+        window.navigateTo('chat');
+        var t = document.getElementById('pageTitle'); if (t) t.textContent = 'Chat';
+        didInitialNav = true; return;
+      } catch (e) {}
+    }
+    // Fallback 3: click programático + atualizar título
+    try {
+      chatNav.click();
+      var t2 = document.getElementById('pageTitle'); if (t2) t2.textContent = 'Chat';
+      didInitialNav = true;
+    } catch (e) {}
+  }
+
   function boot() {
     hookMessagePersistence();
     migrateLegacy();
@@ -424,11 +453,14 @@
         // Se já tem conversas, garante que ativa exista
         var list = loadList();
         if (list.length) ensureActiveConversation();
+        // Navega para Chat no primeiro boot (só uma vez)
+        navigateToChatOnBoot();
       }
       if (tries > 120) clearInterval(interval); // 60s cap
     }, 500);
     // Tenta imediato também
     ensureUiPresent();
+    navigateToChatOnBoot();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(boot, 300); });
