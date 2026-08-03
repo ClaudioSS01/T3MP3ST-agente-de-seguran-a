@@ -248,11 +248,12 @@
     if (!box) return;
     if (!history.length) {
       box.innerHTML =
-        '<div class="t3c-empty">👋 Fale com o <strong>Comandante</strong> — o agente-chefe que coordena os especialistas.<br><br>' +
-        'Exemplos:' +
-        '<div><span class="t3c-chip" data-ex="Explique em 3 passos como você faria um pentest no meu site autorizado.">Como fazer um pentest</span>' +
-        '<span class="t3c-chip" data-ex="Quais especialistas e ferramentas você usaria para testar OWASP Top 10 numa API?">Testar uma API</span>' +
-        '<span class="t3c-chip" data-ex="Me dê o comando de terminal para escanear as portas de scanme.nmap.org.">Comando de scan</span></div></div>';
+        '<div class="t3c-empty">👋 Fale com o <strong>Comandante</strong>. Ele conversa — e quando você pede <strong>recon num alvo</strong>, ele <strong>executa ferramentas de verdade</strong> (curl/DNS agora, nmap quando instalado) e te mostra a saída literal + análise.<br><br>' +
+        'Experimente:' +
+        '<div><span class="t3c-chip" data-ex="faz um recon em example.com">🔍 Recon em example.com (real)</span>' +
+        '<span class="t3c-chip" data-ex="analisa o site https://scanme.nmap.org">🔍 Analisar um site</span>' +
+        '<span class="t3c-chip" data-ex="Explique em 3 passos como você faria um pentest autorizado.">Como fazer um pentest</span></div>' +
+        '<div style="margin-top:10px;font-size:11px;color:#6a7a85">⚠️ Só rode recon em alvos que você tem autorização. O sistema pede aprovação de escopo (autorizada automaticamente quando você nomeia o alvo).</div></div>';
       Array.prototype.forEach.call(box.querySelectorAll('.t3c-chip'), function (c) {
         c.addEventListener('click', function () {
           var inp = document.getElementById('t3cInput'); inp.value = c.getAttribute('data-ex'); inp.focus();
@@ -280,6 +281,13 @@
     renderMsgs();
     busy = true;
     var sendBtn = document.getElementById('t3cSend'); if (sendBtn) sendBtn.disabled = true;
+
+    // Micro-fluxo de recon REAL: se o usuário pediu recon e há um alvo → executa ferramentas
+    var target = extractTarget(text);
+    if (target && isReconIntent(text)) {
+      runReconFlow(target);
+      return;
+    }
 
     var msgs = [{ role: 'system', content: SYSTEM_PROMPT }].concat(
       history.filter(function (m) { return m.content !== '…'; })
@@ -325,6 +333,124 @@
       var lastUser = '';
       for (var i = history.length - 1; i >= 0; i--) { if (history[i].role === 'user') { lastUser = history[i].content; break; } }
       serverChat(lastUser);
+    });
+  }
+
+  // ═══════════════════════════════════════════════
+  // MOTOR DE RECON REAL (Chat → ferramentas do backend)
+  // Fluxo testado: execute → 403 → authorize-target → retry c/ approvalId → saída real
+  // ═══════════════════════════════════════════════
+  var RECON_KW = /\b(recon|reconhecimento|analis|anális|escane|scan|varред|varre|verific|checa|investiga|olha(r)? (o|a|no|na)|pentest|footprint|fingerprint)/i;
+  function isReconIntent(t) { return RECON_KW.test(t || ''); }
+  function extractTarget(t) {
+    if (!t) return null;
+    var m = t.match(/https?:\/\/[^\s"'<>]+/i);
+    if (m) return m[0];
+    // host/domínio (ex: scanme.nmap.org) ou IP
+    m = t.match(/\b((?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,})\b/i);
+    if (m) return m[1];
+    m = t.match(/\b(\d{1,3}(?:\.\d{1,3}){3})\b/);
+    if (m) return m[1];
+    return null;
+  }
+  function hostOf(t) { return String(t).replace(/^https?:\/\//i, '').replace(/[\/:?#].*$/, ''); }
+
+  function apiPost(path, body) {
+    return fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().then(function (j) { return { status: r.status, json: j }; }, function () { return { status: r.status, json: null }; }); });
+  }
+
+  // Roda uma ferramenta lidando com o portão de aprovação (auto-autoriza o alvo que o usuário pediu)
+  function runTool(command, target) {
+    return apiPost('/api/tools/execute', { command: command, target: target }).then(function (r1) {
+      if (r1.status === 200) return r1.json;
+      var id = r1.json && r1.json.approval && r1.json.approval.id;
+      if (r1.status === 403 && id) {
+        return apiPost('/api/approvals/authorize-target', { target: target, approvalId: id })
+          .then(function () { return apiPost('/api/tools/execute', { command: command, target: target, approvalId: id }); })
+          .then(function (r3) { return r3.json || { success: false, error: 'sem resposta' }; });
+      }
+      return r1.json || { success: false, error: 'HTTP ' + r1.status };
+    }).catch(function (e) { return { success: false, error: String(e && e.message || e) }; });
+  }
+
+  function notInstalled(res) {
+    var e = (res && res.error) || '';
+    return /ENOENT|spawn \S+ ENOENT|not found|not recognized|No such file|cannot find|não .*reconhec|command failed[\s\S]*(nmap|dig)/i.test(e);
+  }
+  function toolText(res) {
+    if (!res) return '(sem resposta)';
+    if (res.output && String(res.output).trim()) return String(res.output).trim();
+    if (res.error) return '⚠️ ' + String(res.error).trim();
+    return '(vazio)';
+  }
+
+  // Interpretação estreita pelo LLM (micro-responsabilidade)
+  function llmInterpret(promptText) {
+    var msgs = [
+      { role: 'system', content: 'Você é um analista de segurança. Recebe a SAÍDA LITERAL de ferramentas de recon e a interpreta em português, conciso e técnico: servidor/tecnologias, headers de segurança presentes/ausentes, portas/serviços, e 2-3 observações acionáveis. NÃO invente nada além da saída. Se a saída for erro/vazia, diga isso.' },
+      { role: 'user', content: promptText }
+    ];
+    if (ollamaOk !== false) {
+      return fetch(OLLAMA + '/api/chat', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ model: currentModel, messages: msgs, stream: false }) })
+        .then(function (r) { if (!r.ok) throw 0; return r.json(); })
+        .then(function (d) { return (d.message && d.message.content) || '(sem interpretação)'; })
+        .catch(function () { return llmInterpretServer(promptText); });
+    }
+    return llmInterpretServer(promptText);
+  }
+  function llmInterpretServer(promptText) {
+    return fetch('/api/llm/chat', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ message: promptText, systemPrompt: 'Analista de segurança: interprete a saída literal de recon em PT, conciso. Não invente.' }) })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { return (d && d.response) || '(sem interpretação — LLM indisponível)'; })
+      .catch(function () { return '(não consegui interpretar — LLM indisponível)'; });
+  }
+
+  // Orquestra o recon real e vai atualizando a bolha do chat
+  function runReconFlow(rawTarget) {
+    var host = hostOf(rawTarget);
+    var url = /^https?:\/\//i.test(rawTarget) ? rawTarget : ('https://' + host);
+    var acc = '';
+    function step(s) { acc += s + '\n'; setLast(acc); }
+
+    step('🎯 **Recon REAL** em `' + host + '` — vou executar ferramentas de verdade e mostrar a saída literal.');
+    step('🔓 Autorizei este alvo porque **você** pediu (escopo temporário, 30 min).');
+    step('');
+    step('**▶ HTTP (curl):** `curl -sSI ' + url + '`');
+
+    return runTool('curl -sSI ' + url, host).then(function (httpRes) {
+      // fallback https->http se não conectou
+      var needHttp = httpRes && httpRes.success === false && /Could not connect|Failed to connect|Connection refused/i.test(httpRes.error || '') && /^https/i.test(url);
+      var p = needHttp
+        ? (step('   (https falhou, tentando http…)'), runTool('curl -sSI http://' + host, host))
+        : Promise.resolve(httpRes);
+
+      return p.then(function (finalHttp) {
+        step('```\n' + toolText(finalHttp) + '\n```');
+        step('');
+        step('**▶ Portas (nmap):** `nmap -F ' + host + '`');
+        return runTool('nmap -F ' + host, host).then(function (nmapRes) {
+          var nmapTxt;
+          if (notInstalled(nmapRes)) { nmapTxt = 'ℹ️ nmap não está instalado — pulei o scan de portas. Instale (`winget install Insecure.Nmap`) e ele entra automático.'; }
+          else { nmapTxt = '```\n' + toolText(nmapRes) + '\n```'; }
+          step(nmapTxt);
+          step('');
+          step('🧠 Interpretando os resultados reais…');
+
+          var prompt = 'Alvo: ' + host + '\n\n=== SAÍDA curl (headers) ===\n' + toolText(finalHttp) +
+            '\n\n=== SAÍDA nmap ===\n' + (notInstalled(nmapRes) ? '(nmap não instalado)' : toolText(nmapRes)) +
+            '\n\nInterprete os achados reais acima.';
+          return llmInterpret(prompt).then(function (interp) {
+            acc = acc.replace('🧠 Interpretando os resultados reais…\n', '');
+            step('---');
+            step('🧠 **Análise:**\n' + interp);
+            finish();
+          });
+        });
+      });
+    }).catch(function (e) {
+      step('❌ Erro no recon: ' + (e && e.message || e));
+      finish();
     });
   }
 
