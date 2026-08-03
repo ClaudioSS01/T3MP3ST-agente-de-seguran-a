@@ -4467,7 +4467,13 @@ function healthPayload(): Record<string, unknown> {
   };
 }
 
+let _toolAvailAt = 0;
+let _toolAvailData: Awaited<ReturnType<typeof inspectToolAvailability>> | null = null;
 async function inspectToolAvailability(): Promise<Array<{ id: string; name: string; displayName: string; binary: string; available: boolean; path?: string; category: string; risk: string; execution: string; networked: boolean; requiredFor: string[]; installHint: string; commandHint: string; parserStatus: string; note?: string }>> {
+  // Cache curto: cada checagem spawna ~73 `where`/`which` (~1.7s). Sem cache, /api/arsenal/status
+  // e /api/preflight travam a UI quando há polling. TTL de 30s reflete instalações novas rápido
+  // (o restart pelo launcher zera o cache de qualquer forma).
+  if (_toolAvailData && Date.now() - _toolAvailAt < 30000) return _toolAvailData;
   const requiredFor: Record<string, string[]> = {
     file: ['field_drill', 'local_artifact_inspection'],
     curl: ['api_smoke', 'http_probe'],
@@ -4491,7 +4497,7 @@ async function inspectToolAvailability(): Promise<Array<{ id: string; name: stri
     parserStatus: 'text' as const,
     notes: 'Repository context for local evidence and provenance.',
   }];
-  return Promise.all(adapters.map(async adapter => {
+  const result = await Promise.all(adapters.map(async adapter => {
     try {
       const whichBin = process.platform === 'win32' ? 'where' : 'which';
       const { stdout } = await execFileAsync(whichBin, [adapter.binary], { timeout: 1500 });
@@ -4530,6 +4536,9 @@ async function inspectToolAvailability(): Promise<Array<{ id: string; name: stri
       };
     }
   }));
+  _toolAvailData = result;
+  _toolAvailAt = Date.now();
+  return result;
 }
 
 async function buildPreflightReport(): Promise<Record<string, unknown>> {

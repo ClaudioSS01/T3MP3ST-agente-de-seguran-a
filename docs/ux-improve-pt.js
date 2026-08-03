@@ -2998,7 +2998,8 @@
   }
 
   function improveArsenalInstalled() {
-    var page = el('page-arsenal'); if (!page) return;
+    var page = el('page-arsenal');
+    if (!page || !page.classList.contains('active')) return; // só quando a aba Arsenal está aberta
     fetchArsStatus().then(function () {
       arsSummary();
       badgeArsenal();
