@@ -2,7 +2,43 @@
 
 Registro de tudo que foi ajustado nesta instância local do T3MP3ST. **Todas as mudanças de UI são via camada de overlay (não-invasivas e 100% reversíveis)** — o código original do T3MP3ST não foi alterado, exceto por tags `<script>` no `index.html` e o tour antigo comentado.
 
-Última atualização: 2026-08-03 (v2 — motor de recon expandido).
+Última atualização: 2026-08-03 (v3 — sistema de conversas + PDF client-side + Chat como aba padrão).
+
+---
+
+## 🚀 TL;DR — o que este fork adiciona ao T3MP3ST upstream
+
+**Interface completa em PT-BR + workflow de segurança pronto para uso.**
+
+| Feature | Como usar | Arquivo |
+|---|---|---|
+| **Tradução PT-BR** completa da UI (~800 strings estáticas + dinâmicas) | Automático ao abrir | `docs/i18n-pt.js` + `docs/ux-improve-pt.js` |
+| **Aba "Chat"** com o Comandante — LLM local (Ollama), sem chaves de API | Aba padrão no boot | `docs/chat-pt.js` |
+| **Auto-detect de URL no chat** — cola `alvo.com` e o recon dispara | Digite URL + Enter | `docs/chat-recon-v2.js` |
+| **Motor Recon V2 — 8 fases passivas** (Headers/DNS/DMARC/Shodan/crt.sh/paths/JS secrets/TLS) | Botão 🎯 Recon V2 ou auto-detect | `docs/chat-recon-v2.js` + `docs/RECON_METHODOLOGY.md` |
+| **PDF client-side** com identidade visual — dossiê pronto para cliente | Botão 📄 Baixar PDF (após recon) | jsPDF lazy-load do CDN |
+| **Sistema de conversas** — histórico, nova conversa limpa, título automático | Botão 💬 Conversas no topo do chat | `docs/chat-conversations.js` |
+| **Cofre de Evidências** persistente com filtros e export Markdown | Menu lateral → Cofre | `docs/ux-improve-pt.js` (parte do overlay) |
+| **Deploy VPS** com Cloudflare Access (Zero Trust) | Guia passo-a-passo | `docs/DEPLOY_VPS.md` |
+| **Metodologia dos 60 pontos** black-box auditada e documentada | Referência para o Comandante | `docs/RECON_METHODOLOGY.md` |
+| **Auto-instalador de ferramentas** sob demanda (nuclei/httpx/sqlmap) | `~/install-t3mp3st-tool.ps1 <nome>` | Windows-safe |
+| **Launcher instância única** (Windows) | `~/T3MP3ST.cmd` | `~/start-t3mp3st.ps1` |
+
+**Para começar rápido:**
+
+```bash
+# 1. Ollama + modelo
+ollama serve
+ollama pull qwen2.5:3b   # ou qwen2.5-coder:7b se tiver 5GB+ RAM
+
+# 2. Servidor T3MP3ST
+npm install && npm run build && npm run server:prod
+
+# 3. Abre http://127.0.0.1:3333/ui/ → Chat já é a aba padrão
+# 4. Cola uma URL autorizada → Recon V2 dispara → Baixar PDF
+```
+
+---
 
 ---
 
@@ -91,6 +127,46 @@ Cada achado é registrado no **Cofre** via `window.addFinding()` (integra com a 
 
 **Base metodológica:** `docs/RECON_METHODOLOGY.md` documenta cada um dos 60 pontos com comandos executáveis e status (✅ automatizado / 🟡 semi / 🔒 exige auth / ⚠️ manual).
 
+### `chat-recon-v2.js` v2.3 — extras acima do motor base
+
+- **Auto-detect de URL:** colar `alvo.com` no chat (sem palavra-chave) já dispara o Recon V2. Intercepta click no botão Enviar E tecla Enter no textarea via listener em `capture: true`.
+- **Relatório inline formatado:** sumário no próprio chat com headings coloridos, blocos escuros terminal-style, bullets, agrupamento por severidade — **não** redireciona para Cofre.
+- **3 botões dentro da bubble** (fixa layout flex que esticava botões antes):
+  - **📄 Baixar PDF** — lazy-load do jsPDF via CDN (cdnjs + fallback unpkg). Renderiza capa azul com badge CONFIDENCIAL, sumário, cards de achado com borda esquerda colorida, footer com número de página.
+  - **📝 Baixar Markdown** — blob download com estrutura profissional.
+  - **📋 Copiar** — `navigator.clipboard` com o Markdown.
+- **Persistência independente** em `t3rv2_messages_v1` (cap 20 recons), throttle 500ms.
+- **Restauração automática** ao voltar de outra aba (MutationObserver em `#page-chat.active`).
+- **Botão "🧹 Limpar recons"** no header para reset manual.
+
+### `chat-conversations.js` (~400 linhas) — **NOVO** sistema de conversas
+
+Adicionado em 2026-08-03. Permite manter múltiplas conversas separadas com o Comandante — cada uma com seu próprio histórico.
+
+- **Botão "💬 Conversas"** no header do chat abre drawer lateral direito
+- **Botão "+ Nova conversa"** cria conversa limpa (auto-titula pela 1ª mensagem)
+- **Lista de conversas** com título + data/hora + contador de mensagens
+- **Delete por conversa** com confirmação
+- **Storage isolado por conversa:** `t3conv_msgs_<id>` (cap 200 msg/conv, 20 conv máx)
+- **Migração automática** do formato antigo `t3rv2_messages_v1` → "Recons anteriores (migrado)"
+- **Chat geral capturado** via `MutationObserver` — perguntas comuns ao Comandante são salvas na conversa ativa (não só recons)
+- **Chat vira aba padrão** no boot inicial (via `__t3chat.open()`) — não é mais Sala de Guerra
+
+**Bug fix crítico:** `safeParse(localStorage.getItem(key), [])` retornava `null` quando chave não existia porque `JSON.parse(null) === null` no JS. Corrigido com check explícito.
+
+### System prompt aprimorado (`chat-pt.js`) — Comandante bem informado
+
+O `SYSTEM_PROMPT` do LLM local foi expandido para ~50 linhas de contexto denso. O Comandante agora sabe:
+
+- **As 8 fases do Recon V2** e como interpretá-las
+- **Metodologia dos 60 pontos** black-box (footprinting, injection, headers, storage, buckets, etc)
+- **Padrões de achado reconhecidos** — HSTS/CSP/CORS wildcard, Swagger público, NgRx prod, DMARC p=none, Google API keys sem restrição, Supabase RLS, Replit deploys, bolt.new, x-render-origin-server, x-wix-request-id
+- **Stacks comuns MedSimples** — Base44 (Wix), Render.com, FastAPI, Cloudflare
+- **Regras invioláveis:** nunca inventar, evidência literal, PII stop, comando pronto pra copiar
+- **Formato:** Markdown, conciso por padrão, expande se pedirem
+
+Resultado: chat vira útil para **qualquer pergunta de segurança** (não só recon). Ex: "explica CSP frame-ancestors", "como funciona Cloudflare Access", "riscos de Supabase anon key exposta" — o Comandante responde com profundidade técnica.
+
 ## 4. Diagnósticos importantes
 
 - **"Could not connect to local LLM"** = Ollama não estava rodando (não auto-sobe após reboot). Resolvido; launcher agora garante.
@@ -118,6 +194,24 @@ Ver **`docs/DEPLOY_VPS.md`** — guia passo-a-passo para rodar o T3MP3ST no VPS 
 
 Após deploy: acessa `https://t3mp3st.seudominio.com` do celular / notebook / qualquer lugar — não precisa mais deixar o PC ligado.
 
+## 7. Testes automatizados
+
+Execute com o servidor rodando para pegar integração; sem servidor os testes unitários também passam (5 checks pulados quando offline).
+
+```bash
+npm run test:chat-recon-v2   # 32 checks: regex secrets, SPA fallback, fases, integração
+npm run test:arsenal-tools   # 97 checks: guard shell-injection do arsenal
+npm run test:autodetect      # 15 checks
+npm run test:no-fitting      # 0 tells challenge-specific
+```
+
+Todos passando na última execução (2026-08-03).
+
 ## Como reverter tudo (voltar ao T3MP3ST original)
 
-Remover do `index.html` as 5 linhas `<script src="*-pt.js">` + `chat-recon-v2.js` e descomentar o bloco `TOUR_REMOVED`. Os arquivos `docs/*-pt.js` + `docs/chat-recon-v2.js` podem ser apagados. Backup do index em inglês: `docs/index.html.bak-en`.
+Remover do `index.html` as 6 linhas `<script src="*-pt.js">` + `chat-recon-v2.js` + `chat-conversations.js` e descomentar o bloco `TOUR_REMOVED`. Os arquivos `docs/*-pt.js` + `docs/chat-recon-v2.js` + `docs/chat-conversations.js` podem ser apagados. Backup do index em inglês: `docs/index.html.bak-en`.
+
+Para limpar dados persistidos (localStorage), abrir DevTools no browser e rodar:
+```js
+Object.keys(localStorage).filter(k => k.startsWith('t3conv_') || k.startsWith('t3rv2_') || k.startsWith('t3ux_')).forEach(k => localStorage.removeItem(k))
+```

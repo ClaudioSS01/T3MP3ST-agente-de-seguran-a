@@ -22,6 +22,58 @@
 
 </div>
 
+---
+
+## 🇧🇷 Este é um FORK com customizações (Claudio)
+
+Este repositório é um fork de [`elder-plinius/T3MP3ST`](https://github.com/elder-plinius/T3MP3ST) com uma camada de UX/features adicionada em PT-BR — **100% em overlay, sem tocar no código original** (só tags `<script>` em `docs/index.html`).
+
+**O que este fork entrega além do upstream:**
+
+- 🇧🇷 **Interface completa em PT-BR** (~800 strings traduzidas — estáticas + dinâmicas via MutationObserver)
+- 💬 **Aba Chat** com o Comandante — LLM local via Ollama, sem API keys · aba padrão ao abrir a aplicação
+- 🎯 **Motor Recon V2** — 8 fases passivas cobrindo 40+ dos 60 pontos de auditoria black-box (Headers, DNS/DMARC/SPF, Shodan InternetDB, crt.sh, common paths com SPA-aware, secrets em JS bundles, HTML markers, TLS)
+- ⚡ **Auto-detect de URL no chat** — cole `alvo.com` e o recon dispara sozinho, sem palavra-chave
+- 📄 **Baixar PDF client-side** — dossiê profissional gerado no browser via jsPDF (identidade visual com badge CONFIDENCIAL)
+- 📝 **Baixar Markdown** + **Copiar** para clipboard
+- 💾 **Sistema de conversas** — histórico, "+ Nova conversa", cada conversa com storage isolado
+- 🔐 **Cofre de Evidências** persistente com filtros por severidade/alvo/data + export
+- 🚀 **Deploy VPS** com Cloudflare Access (Zero Trust) — guia passo-a-passo
+- 🛠️ **Auto-instalador de ferramentas** sob demanda (nuclei/httpx/sqlmap sem admin)
+
+**Documentação do fork:**
+
+- 📋 [`README-CUSTOMIZACOES.md`](README-CUSTOMIZACOES.md) — log detalhado de todas as customizações
+- 🧭 [`docs/RECON_METHODOLOGY.md`](docs/RECON_METHODOLOGY.md) — metodologia dos 60 pontos de auditoria black-box
+- 🌐 [`docs/DEPLOY_VPS.md`](docs/DEPLOY_VPS.md) — deploy no DigitalOcean com Nginx + Let's Encrypt + Cloudflare Access
+- 📊 [`PLANO-ESFORCO-x-GANHO.md`](PLANO-ESFORCO-x-GANHO.md) — triagem honesta do que vale tornar real
+
+**Início rápido (fork):**
+
+```bash
+# 1. Ollama + modelo (sem chave de API)
+ollama serve
+ollama pull qwen2.5:3b      # leve · roda em 4GB RAM
+# OU qwen2.5-coder:7b se tiver 8GB+ RAM
+
+# 2. Servidor T3MP3ST
+npm ci && npm run build && npm run server:prod
+# → http://127.0.0.1:3333/ui/ (abre em "Chat" por padrão)
+
+# 3. No chat, cole um domínio autorizado → o Recon V2 executa as 8 fases
+#    ao terminar, clique em 📄 Baixar PDF para o dossiê profissional
+```
+
+**Este fork NÃO altera:**
+- O comportamento do T3MP3ST original (`server`, `arsenal`, `agent`, `cli`, `mission`)
+- As garantias de reproducibilidade (`npm run verify-claims` continua 27/27)
+- O que é estável vs experimental vs andaime (tabela abaixo permanece verdadeira)
+- Nenhum arquivo em `src/`
+
+**Para reverter tudo:** remover 6 tags `<script>` do fim de `docs/index.html` — pronto, volta ao T3MP3ST upstream. Detalhes no [README-CUSTOMIZACOES.md](README-CUSTOMIZACOES.md#como-reverter-tudo-voltar-ao-t3mp3st-original).
+
+---
+
 **Seu agente de código de IA já é um hacker — o T3MP3ST entrega a ele um arsenal.**
 
 Aponte-o para um alvo autorizado e a kill chain se executa sozinha: **recon → exploit → report**, a partir de uma War Room no navegador ou da CLI, conduzida pelo agente em que você *já* está logado — Claude Code, Codex, Hermes, OpenCode, Oh My Pi — ou por um modelo que você roda **totalmente offline** (Ollama, LM Studio, vLLM). Sem novas chaves de API, sem tenant na nuvem, sem segunda fatura. Seu agente é o cérebro; o T3MP3ST é a máquina de guerra montada ao redor dele. **Tempestade auto-hospedada. Guerra sem chaves.** ⚡
