@@ -2500,6 +2500,7 @@
   // ═══════════════════════════════════════════════
   var FKEY = 't3ux_findings_v1';
   var NKEY = 't3ux_notes_v1';
+  var _evLast = [];
 
   function mfArray() {
     try { return (typeof missionFindings !== 'undefined' && Array.isArray(missionFindings)) ? missionFindings : null; }
@@ -2567,6 +2568,16 @@
       };
       window.clearFindings.__uxWrapped = true;
     }
+    // Substituir o modal de detalhe do achado pelo nosso (rico, em PT, com "replicar")
+    if (!window.__uxFindingModal) {
+      window.showFindingDetail = function (index) {
+        var mf = mfArray();
+        var f = mf && mf[index];
+        if (f) findingModalFor(f);
+      };
+      window.__uxFindingModal = true;
+    }
+
     restoreFindings();
     mirrorLive();
   }
@@ -2691,14 +2702,15 @@
     var sevColor = { critical: '#ff0040', high: '#ff4444', medium: '#ffaa00', low: '#0088ff', info: '#888' };
     var typeIcon = { vuln: '🔓', cred: '🔑', access: '🚪', info: 'ℹ️' };
     filtered.sort(function (a, b) { return (b._uxTs || 0) - (a._uxTs || 0); });
-    list.innerHTML = filtered.map(function (f) {
+    _evLast = filtered;
+    list.innerHTML = filtered.map(function (f, idx) {
       var c = sevColor[(f.severity || 'info').toLowerCase()] || '#888';
       var k = fkeyOf(f);
       var note = notes[k] || '';
       return '<div class="ux-ev-item" style="border-left-color:' + c + '">' +
-        '<div class="ux-ev-item-top"><span class="ux-ev-sev" style="color:' + c + ';background:rgba(255,255,255,.04)">' + escapeText((f.severity || '').toUpperCase()) + '</span>' +
+        '<div class="ux-ev-item-top" style="cursor:pointer" onclick="window.__t3ux.evModal(' + idx + ')" title="Ver detalhes e como replicar"><span class="ux-ev-sev" style="color:' + c + ';background:rgba(255,255,255,.04)">' + escapeText((f.severity || '').toUpperCase()) + '</span>' +
         '<span>' + (typeIcon[f.type] || '') + '</span>' +
-        '<span class="ux-ev-item-title">' + escapeText(f.title || '') + '</span></div>' +
+        '<span class="ux-ev-item-title">' + escapeText(f.title || '') + '</span><span style="margin-left:auto;font-size:11px;color:#5a7a88">detalhes ›</span></div>' +
         '<div class="ux-ev-meta"><span>🎯 ' + escapeText(f.target || '-') + '</span><span>📶 ' + escapeText(f.phase || '-') + '</span><span>🕒 ' + escapeText((f._uxDate ? f._uxDate + ' ' : '') + (f.timestamp || '')) + '</span></div>' +
         (f.detail ? '<div style="font-size:11.5px;color:#9fb0bd;margin-bottom:4px">' + escapeText(f.detail) + '</div>' : '') +
         '<textarea class="ux-ev-note" data-k="' + escapeText(k) + '" placeholder="✍️ Adicionar observação sobre este achado (salva automaticamente)...">' + escapeText(note) + '</textarea>' +
@@ -2733,6 +2745,121 @@
     a.download = 'achados-t3mp3st.md';
     a.click();
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  }
+
+  // ═══════════════════════════════════════════════
+  // MODAL RICO DE ACHADO (o que / onde / como / replicar)
+  // ═══════════════════════════════════════════════
+  function looksUrl(t) { return /^https?:\/\//i.test(t || ''); }
+  function looksHostOrIp(t) { return t && t !== '-' && /^[a-z0-9._\-:]+$/i.test(t) && /[.:]/.test(t); }
+
+  function genRepro(f) {
+    var t = (f.target || '').trim();
+    var toolBacked = (f.provenance || '').toLowerCase() === 'tool' && !!(f.evidence && String(f.evidence).trim());
+    var cmds = [];
+    if (t && t !== '-') {
+      if (looksUrl(t)) {
+        cmds.push({ label: 'Ver status + cabeçalhos HTTP da resposta', cmd: "curl -i -sS \"" + t + "\"" });
+        cmds.push({ label: 'Baixar o corpo da resposta para inspecionar', cmd: "curl -sS \"" + t + "\" -o resposta.html && type resposta.html" });
+        var host = t.replace(/^https?:\/\//i, '').replace(/\/.*$/, '');
+        cmds.push({ label: 'Ver certificado / serviços do host', cmd: 'nmap -sV -Pn ' + host });
+      } else if (looksHostOrIp(t)) {
+        cmds.push({ label: 'Resolver DNS do alvo', cmd: 'nslookup ' + t });
+        cmds.push({ label: 'Escanear portas e versões de serviço', cmd: 'nmap -sV -Pn ' + t });
+        cmds.push({ label: 'Testar resposta HTTP', cmd: "curl -i -sS \"http://" + t + "\"" });
+      }
+    }
+    return { hasTarget: !!(t && t !== '-'), toolBacked: toolBacked, cmds: cmds };
+  }
+
+  function findingModalFor(f) {
+    if (!f) return;
+    var sevColor = { critical: '#ff0040', high: '#ff4444', medium: '#ffaa00', low: '#0088ff', info: '#888' };
+    var c = sevColor[(f.severity || 'info').toLowerCase()] || '#888';
+    var sevLabel = { critical: 'CRÍTICO', high: 'ALTO', medium: 'MÉDIO', low: 'BAIXO', info: 'INFO' }[(f.severity || 'info').toLowerCase()] || (f.severity || '').toUpperCase();
+    var typeLabel = { vuln: 'Vulnerabilidade', cred: 'Credencial', access: 'Acesso', info: 'Informação' }[f.type] || (f.type || '-');
+    var toolBacked = (f.provenance || '').toLowerCase() === 'tool' && !!(f.evidence && String(f.evidence).trim());
+
+    // ── Aba "O que" ──
+    var oque =
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><span class="ux-ev-sev" style="color:' + c + ';background:rgba(255,255,255,.05);font-size:11px">' + escapeText(sevLabel) + '</span><span style="font-size:15px;color:#e4edf2;font-weight:700">' + escapeText(f.title || '-') + '</span></div>' +
+      '<table style="width:100%;border-collapse:collapse;font-size:13px">' +
+      rcRow('Tipo', escapeText(typeLabel)) +
+      rcRow('O que foi encontrado', escapeText(f.detail || f.title || '-')) +
+      '</table>';
+
+    // ── Aba "Onde" ──
+    var onde =
+      '<table style="width:100%;border-collapse:collapse;font-size:13px">' +
+      rcRow('Alvo', f.target && f.target !== '-' ? '<code>' + escapeText(f.target) + '</code>' : '<span style="color:#ff8888">— (nenhum alvo associado)</span>') +
+      rcRow('Fase da kill chain', escapeText(f.phase || '-')) +
+      rcRow('Quando', escapeText((f._uxDate ? f._uxDate + ' ' : '') + (f.timestamp || '-'))) +
+      '</table>';
+
+    // ── Aba "Como / Prova" ──
+    var provExplain = toolBacked
+      ? '<span style="color:#00ff88;font-weight:700">✔ Tem prova de ferramenta (tool-backed)</span> — uma ferramenta real produziu este resultado. A evidência está abaixo.'
+      : '<span style="color:#ffaa00;font-weight:700">⚠ Afirmado pelo modelo (model-asserted · não verificado)</span> — este achado foi <strong>deduzido pela IA</strong>, sem uma ferramenta que o comprove. Trate como hipótese a confirmar, não como fato.';
+    var como =
+      '<div style="font-size:13px;line-height:1.6;color:#c0d4de;margin-bottom:10px">' + provExplain + '</div>' +
+      '<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#7a8a95;margin-bottom:4px">Evidência</div>' +
+      (f.evidence && String(f.evidence).trim()
+        ? '<pre style="white-space:pre-wrap;word-break:break-word;font-size:12px;color:#9fd6c0;background:rgba(0,0,0,.4);padding:10px;border-radius:6px;max-height:260px;overflow:auto">' + escapeText(String(f.evidence)) + '</pre>'
+        : '<div style="color:#ff9999;font-style:italic;font-size:12.5px">Nenhuma evidência de ferramenta anexada — não há saída de comando comprovando este achado.</div>');
+
+    // ── Aba "Replicar" ──
+    var rep = genRepro(f);
+    var replicar;
+    if (!rep.hasTarget) {
+      replicar = '<div style="font-size:13px;line-height:1.6;color:#ffb0b0;background:rgba(255,68,68,.08);border:1px solid rgba(255,68,68,.3);border-radius:8px;padding:12px">' +
+        '⛔ <strong>Não há como replicar este achado.</strong><br>Ele não tem um alvo associado (Alvo = "—") e ' + (toolBacked ? 'nenhum comando registrado' : 'foi afirmado pelo modelo, sem ferramenta por trás') + '. Não existe passo reproduzível — é só uma anotação/hipótese.</div>';
+    } else {
+      var head = toolBacked
+        ? '<div style="font-size:12.5px;line-height:1.55;color:#a8f0cc;background:rgba(0,255,136,.07);border:1px solid rgba(0,255,136,.25);border-radius:8px;padding:10px;margin-bottom:12px">✔ Achado com prova. Os comandos abaixo ajudam você a <strong>confirmar manualmente</strong> no alvo. O payload exato do achado está na aba <em>Como / Prova</em>.</div>'
+        : '<div style="font-size:12.5px;line-height:1.55;color:#ffd88a;background:rgba(255,170,0,.08);border:1px solid rgba(255,170,0,.28);border-radius:8px;padding:10px;margin-bottom:12px">⚠ Achado <strong>sem prova de ferramenta</strong>. Os comandos abaixo NÃO reproduzem o achado — servem para <strong>você mesmo investigar o alvo do zero</strong> e verificar se procede.</div>';
+      var list = rep.cmds.map(function (x, i) {
+        return '<div style="margin-bottom:10px"><div style="font-size:11px;color:#8a99a5;margin-bottom:3px">' + escapeText(x.label) + '</div>' +
+          '<div style="display:flex;gap:6px;align-items:stretch">' +
+          '<code style="flex:1;background:rgba(0,0,0,.45);padding:8px 10px;border-radius:6px;color:#8ab8cc;font-size:12px;overflow-x:auto;white-space:pre">' + escapeText(x.cmd) + '</code>' +
+          '<button class="ux-ev-btn ux-copy-cmd" data-cmd="' + encodeURIComponent(x.cmd) + '" title="Copiar">⧉</button></div></div>';
+      }).join('');
+      replicar = head + list +
+        '<div style="font-size:11px;color:#6a7a85;margin-top:8px">Dica: cole no terminal (cmd/PowerShell). <code>nmap</code> e <code>curl</code> precisam estar instalados. São comandos de recon básicos e não-destrutivos.</div>';
+    }
+
+    var body =
+      '<div class="ux-modal-tabs" style="display:flex;gap:4px;margin-bottom:14px;flex-wrap:wrap">' +
+      '<button class="ux-mt active" data-t="0">O que achou</button>' +
+      '<button class="ux-mt" data-t="1">Onde</button>' +
+      '<button class="ux-mt" data-t="2">Como / Prova</button>' +
+      '<button class="ux-mt" data-t="3">Replicar</button>' +
+      '</div>' +
+      '<div class="ux-mt-panel" data-p="0">' + oque + '</div>' +
+      '<div class="ux-mt-panel" data-p="1" style="display:none">' + onde + '</div>' +
+      '<div class="ux-mt-panel" data-p="2" style="display:none">' + como + '</div>' +
+      '<div class="ux-mt-panel" data-p="3" style="display:none">' + replicar + '</div>';
+
+    showHelpModal('[' + sevLabel + '] ' + escapeText(f.title || 'Achado'), body);
+
+    var ov = document.querySelector('.ux-modal-overlay');
+    if (ov) {
+      var tabs = ov.querySelectorAll('.ux-mt');
+      var panels = ov.querySelectorAll('.ux-mt-panel');
+      for (var i = 0; i < tabs.length; i++) {
+        tabs[i].addEventListener('click', function () {
+          var t = this.getAttribute('data-t');
+          for (var j = 0; j < tabs.length; j++) tabs[j].classList.toggle('active', tabs[j] === this);
+          for (var k = 0; k < panels.length; k++) panels[k].style.display = panels[k].getAttribute('data-p') === t ? '' : 'none';
+        });
+      }
+      var copies = ov.querySelectorAll('.ux-copy-cmd');
+      for (var m = 0; m < copies.length; m++) {
+        copies[m].addEventListener('click', function () {
+          var cmd = decodeURIComponent(this.getAttribute('data-cmd') || '');
+          try { navigator.clipboard.writeText(cmd); this.textContent = '✓'; var self = this; setTimeout(function () { self.textContent = '⧉'; }, 1200); } catch (e) {}
+        });
+      }
+    }
   }
 
   // ═══════════════════════════════════════════════
@@ -2844,5 +2971,9 @@
     if (subAct) { try { subAct(); } catch (e) {} }
   }
 
-  window.__t3ux = { run: run, dict: DYNAMIC_DICT, revealFor: revealFor, rcModal: rcModal };
+  window.__t3ux = {
+    run: run, dict: DYNAMIC_DICT, revealFor: revealFor, rcModal: rcModal,
+    findingModal: findingModalFor,
+    evModal: function (i) { if (_evLast && _evLast[i]) findingModalFor(_evLast[i]); }
+  };
 })();
