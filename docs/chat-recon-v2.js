@@ -860,22 +860,19 @@
       doc.rect(0, 0, PAGE_W, 120, 'F');
       doc.setTextColor(255, 255, 255);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(28);
-      doc.text('MedSimples', PAGE_W/2, 75, { align: 'center' });
-
-      doc.setTextColor.apply(doc, C_TEXT);
-      doc.setFontSize(22);
-      doc.text('DOSSIÊ DE CIBERSEGURANÇA', PAGE_W/2, 200, { align: 'center' });
+      doc.setFontSize(24);
+      doc.text('DOSSIÊ DE CIBERSEGURANÇA', PAGE_W/2, 75, { align: 'center' });
 
       doc.setTextColor.apply(doc, C_PRIMARY);
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'normal');
-      doc.text(r.host, PAGE_W/2, 230, { align: 'center' });
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text(r.host, PAGE_W/2, 210, { align: 'center' });
 
       doc.setTextColor.apply(doc, C_MUTED);
-      doc.setFontSize(10);
-      doc.text('Motor T3MP3ST Recon V2 · 8 fases · ' + r.findings.length + ' achados', PAGE_W/2, 250, { align: 'center' });
-      doc.text(new Date(r.at || Date.now()).toLocaleString('pt-BR'), PAGE_W/2, 268, { align: 'center' });
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Motor T3MP3ST Recon V2 · 8 fases · ' + r.findings.length + ' achados', PAGE_W/2, 240, { align: 'center' });
+      doc.text(new Date(r.at || Date.now()).toLocaleString('pt-BR'), PAGE_W/2, 258, { align: 'center' });
 
       // Badge CONFIDENCIAL
       doc.setFillColor.apply(doc, C_RED_FG);
