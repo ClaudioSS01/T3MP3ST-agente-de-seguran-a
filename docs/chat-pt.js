@@ -415,6 +415,7 @@
 
     step('🎯 **Recon REAL** em `' + host + '` — vou executar ferramentas de verdade e mostrar a saída literal.');
     step('🔓 Autorizei este alvo porque **você** pediu (escopo temporário, 30 min).');
+    step('⏳ **Executando…** (aguarde, o resultado aparece abaixo em tempo real)');
     step('');
     step('**▶ HTTP (curl):** `curl -sSI ' + url + '`');
 
@@ -446,8 +447,12 @@
             '\n\nInterprete os achados reais acima.';
           return llmInterpret(prompt).then(function (interp) {
             acc = acc.replace('🧠 Interpretando os resultados reais…\n', '');
+            // remove o "⏳ Executando…" agora que terminou
+            acc = acc.replace('⏳ **Executando…** (aguarde, o resultado aparece abaixo em tempo real)\n', '');
             step('---');
             step('🧠 **Análise:**\n' + interp);
+            step('');
+            step('✅ **Recon terminado.** Achados que dão para agir agora: veja a análise acima. Para uma varredura mais profunda (DNS, DMARC, crt.sh, secret scan, TLS, common paths com SPA-aware), clique no botão 🎯 **Recon V2** ali em cima.');
             finish();
           });
         });

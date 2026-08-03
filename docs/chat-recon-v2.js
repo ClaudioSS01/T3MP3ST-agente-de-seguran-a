@@ -395,6 +395,7 @@
 
     step('🎯 **Recon V2 (60 pontos) em `' + host + '`** — motor expandido, todos passivos.');
     step('🔓 Alvo autorizado por você (escopo temporário 30 min).');
+    step('⏳ **Executando 8 fases…** cada fase mostra sua saída literal abaixo, depois o sumário final.');
     step('');
 
     // ─── Fase 1: HTTP + Security Headers ────────────
@@ -535,6 +536,9 @@
           step('💾 ' + allFindings.length + ' achados salvos no Cofre.');
         }
       } catch (e) {}
+
+      step('');
+      step('✅ **Recon V2 TERMINADO.** Vá na aba **Cofre de Evidências** ou **Sala de Guerra → Etapa 4** para explorar todos os achados persistidos, filtrar por severidade e exportar Markdown.');
 
       return { findings: allFindings, host: host };
     });
