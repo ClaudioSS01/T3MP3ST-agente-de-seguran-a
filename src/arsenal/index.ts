@@ -3252,7 +3252,8 @@ ${issues.length ? `Issues:\n${issues.join('\n')}` : '✓ No obvious issues'}`,
  */
 export async function isToolAvailable(command: string): Promise<boolean> {
   try {
-    await execFileAsync('which', [command], { timeout: 5000 });
+    const whichBin = process.platform === 'win32' ? 'where' : 'which';
+    await execFileAsync(whichBin, [command], { timeout: 5000 });
     return true;
   } catch {
     return false;

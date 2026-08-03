@@ -4493,14 +4493,15 @@ async function inspectToolAvailability(): Promise<Array<{ id: string; name: stri
   }];
   return Promise.all(adapters.map(async adapter => {
     try {
-      const { stdout } = await execFileAsync('which', [adapter.binary], { timeout: 1500 });
+      const whichBin = process.platform === 'win32' ? 'where' : 'which';
+      const { stdout } = await execFileAsync(whichBin, [adapter.binary], { timeout: 1500 });
       return {
         id: adapter.id,
         name: adapter.binary,
         displayName: adapter.name,
         binary: adapter.binary,
         available: true,
-        path: stdout.trim(),
+        path: stdout.trim().split(/\r?\n/)[0].trim(),
         category: adapter.category,
         risk: adapter.risk,
         execution: adapter.execution,

@@ -123,6 +123,14 @@
     // Abas dentro do modal
     '.ux-mt{padding:6px 14px;border-radius:7px;border:1px solid rgba(255,255,255,.1);background:none;color:#8a99a5;font-size:12px;font-weight:600;cursor:pointer}',
     '.ux-mt.active{background:rgba(47,255,210,.12);border-color:rgba(47,255,210,.4);color:#2fffd2}',
+    // Arsenal: selo instalado/não instalado
+    '.ux-ars-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:800;margin-left:6px;vertical-align:middle;white-space:nowrap}',
+    '.ux-ars-badge.on{background:rgba(0,255,136,.14);color:#00ff88;border:1px solid rgba(0,255,136,.35)}',
+    '.ux-ars-badge.off{background:rgba(255,170,0,.1);color:#ffb84d;border:1px solid rgba(255,170,0,.3);cursor:help}',
+    '.arsenal-card.ux-ars-missing{opacity:.7}',
+    '.ux-ars-summary{padding:11px 14px;margin:0 0 12px;border-radius:10px;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.08);font-size:12.5px;line-height:1.55;color:#c0d4de}',
+    '.ux-ars-summary strong{color:#2fffd2}',
+    '.ux-ars-summary code{background:rgba(47,255,210,.08);padding:1px 5px;border-radius:4px;color:#8ee8c8;font-size:11px}',
     // Live Scan visual feedback
     '@keyframes uxPulse{0%,100%{opacity:1}50%{opacity:.5}}',
     '@keyframes uxScanLine{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}',
@@ -2904,6 +2912,7 @@
     installFindings();
     tagOperatorBadge();
     improveStopButton();
+    improveArsenalInstalled();
   }
 
   // Botão "Parar" claro na Sala de Guerra (relabela o ✕ de abortar)
@@ -2916,6 +2925,90 @@
       b.style.fontWeight = '700';
       b.__uxLabeled = true;
     }
+  }
+
+  // ═══════════════════════════════════════════════
+  // ARSENAL: indicador de instalado / não instalado
+  // ═══════════════════════════════════════════════
+  var _arsStatus = null;   // { map: {chave→{available,hint,binary}}, summary }
+  var _arsFetchedAt = 0;
+
+  function fetchArsStatus() {
+    var now = Date.now();
+    if (_arsStatus && (now - _arsFetchedAt) < 8000) return Promise.resolve(_arsStatus);
+    return fetch('/api/arsenal/status').then(function (r) { return r.json(); }).then(function (st) {
+      var map = {};
+      (st.tools || []).forEach(function (t) {
+        var o = { available: !!t.available, hint: t.installHint || '', binary: t.binary || t.id };
+        [t.id, t.binary, t.name].forEach(function (k) { if (k) map[String(k).toLowerCase()] = o; });
+      });
+      _arsStatus = { map: map, summary: st.summary || {} };
+      _arsFetchedAt = Date.now();
+      return _arsStatus;
+    }).catch(function () { return _arsStatus; });
+  }
+
+  function badgeArsenal() {
+    if (!_arsStatus) return;
+    var page = el('page-arsenal'); if (!page) return;
+    var cards = page.querySelectorAll('.arsenal-card');
+    for (var i = 0; i < cards.length; i++) {
+      var card = cards[i];
+      if (card.querySelector('.ux-ars-badge')) continue;
+      var nameHost = card.querySelector('.arsenal-card-name');
+      if (!nameHost) continue;
+      var key = (card.getAttribute('data-tool') || '').toLowerCase();
+      var nameKey = nameHost.textContent.trim().toLowerCase();
+      var info = _arsStatus.map[key] || _arsStatus.map[nameKey];
+      if (!info) continue; // não está no catálogo do backend → não rotula (honesto)
+      var b = document.createElement('span');
+      if (info.available) {
+        b.className = 'ux-ars-badge on';
+        b.textContent = '✅ instalado';
+      } else {
+        b.className = 'ux-ars-badge off';
+        b.textContent = '⬇ não instalado';
+        b.title = (info.hint ? 'Instalar: ' + info.hint + '\n' : '') +
+          'Auto-instalador (sem admin p/ a maioria):\npowershell $HOME\\install-t3mp3st-tool.ps1 ' + (info.binary || '');
+        card.classList.add('ux-ars-missing');
+      }
+      nameHost.appendChild(b);
+    }
+  }
+
+  function arsSummary() {
+    var page = el('page-arsenal'); if (!page || !_arsStatus) return;
+    var s = _arsStatus.summary || {};
+    var avail = {};
+    for (var k in _arsStatus.map) { if (_arsStatus.map[k].available) avail[_arsStatus.map[k].binary] = 1; }
+    var list = Object.keys(avail).sort().join(', ') || '—';
+    var html = '🔧 <strong>' + (s.installed || 0) + '</strong> de <strong>' + (s.total || '?') +
+      '</strong> ferramentas instaladas no seu PC: ' + escapeText(list) + '. ' +
+      'As marcadas <span style="color:#ffb84d">⬇ não instaladas</span> instalam-se com o auto-instalador — ' +
+      '<code>powershell $HOME\\install-t3mp3st-tool.ps1 &lt;nome&gt;</code> (sem admin p/ a maioria; nmap precisa de admin). ' +
+      'Depois reinicie pelo launcher.';
+    var existing = page.querySelector('.ux-ars-summary');
+    if (existing) { existing.innerHTML = html; return; }
+    var div = document.createElement('div');
+    div.className = 'ux-ars-summary';
+    div.innerHTML = html;
+    var explainer = page.querySelector('.ux-explainer');
+    if (explainer && explainer.nextSibling) page.insertBefore(div, explainer.nextSibling);
+    else page.insertBefore(div, page.firstChild);
+  }
+
+  function improveArsenalInstalled() {
+    var page = el('page-arsenal'); if (!page) return;
+    fetchArsStatus().then(function () {
+      arsSummary();
+      badgeArsenal();
+      var grid = el('arsenalGrid');
+      if (grid && !grid.__uxArsObserved) {
+        grid.__uxArsObserved = true;
+        var obs = new MutationObserver(function () { badgeArsenal(); });
+        obs.observe(grid, { childList: true });
+      }
+    });
   }
 
   // Tooltip explicando o badge de contagem de agentes ("8")
@@ -2963,6 +3056,7 @@
         buildConfigsTabs();
         improveReceiptsPage();
         improveEvidencePage();
+        improveArsenalInstalled();
       }, 200);
       // Self-Improvement renderiza com 60ms delay, então precisa de re-run adicional
       setTimeout(function () {
