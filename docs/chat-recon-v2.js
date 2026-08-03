@@ -658,8 +658,18 @@
     msgs.appendChild(botDiv);
     msgs.scrollTop = msgs.scrollHeight;
 
-    // Salva a entrada no storage
+    // Salva a entrada no storage (formato legacy)
     saveMessage({ query: rawTarget, target: target, acc: '', result: null, at: new Date().toISOString() });
+    // Também grava na conversa ativa (novo formato multi-conversa) se disponível
+    if (window.__t3conv) {
+      try {
+        window.__t3conv.appendMessage({ role: 'user', content: rawTarget, type: 'text', at: new Date().toISOString() });
+        window.__t3conv.appendMessage({ role: 'assistant', content: '', type: 'recon', result: null, at: new Date().toISOString() });
+      } catch (e) {}
+    }
+    // Marca as bolhas para o observer do chat-conversations.js não duplicá-las
+    userDiv.setAttribute('data-t3conv-msg', '1');
+    botDiv.setAttribute('data-t3conv-msg', '1');
 
     var bubble = document.getElementById(bubbleId);
     var acc = '';
@@ -673,6 +683,9 @@
       if (now - lastSave > 500) {
         lastSave = now;
         updateLastMessage({ acc: acc });
+        if (window.__t3conv) {
+          try { window.__t3conv.updateLastMessage({ content: acc }); } catch (e) {}
+        }
       }
     }
     return fullReconV2(target, step)
@@ -681,10 +694,16 @@
         if (b) appendDownloadButtons(b, result);
         // Salvamento final
         updateLastMessage({ acc: acc, result: result });
+        if (window.__t3conv) {
+          try { window.__t3conv.updateLastMessage({ content: acc, result: result }); } catch (e) {}
+        }
       })
       .catch(function (e) {
         step('❌ Erro: ' + (e && e.message || e));
         updateLastMessage({ acc: acc, error: String((e && e.message) || e) });
+        if (window.__t3conv) {
+          try { window.__t3conv.updateLastMessage({ content: acc, error: String((e && e.message) || e) }); } catch (e2) {}
+        }
       });
   }
 
@@ -1011,8 +1030,10 @@
   function attach() {
     if (!window.__t3chat) { setTimeout(attach, 300); return; }
     window.__t3reconV2 = {
-      fullReconV2: fullReconV2, VERSION: '2.2.0',
+      fullReconV2: fullReconV2, VERSION: '2.3.0',
       downloadPdf: downloadPdf, restore: restoreMessages,
+      appendDownloadButtons: appendDownloadButtons,
+      runReconInChat: runReconInChat,
       clear: function () { localStorage.removeItem(STORAGE_KEY); location.reload(); }
     };
     injectStyles();
