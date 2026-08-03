@@ -659,7 +659,8 @@
         '2️⃣ Digite o alvo no campo "HUNT" (um domínio, IP, repo GitHub ou pacote npm). ' +
         '3️⃣ Clique em <strong>HUNT</strong> ou pressione Enter. ' +
         '4️⃣ Acompanhe os resultados no terminal de eventos e no SITREP.' +
-        '<div class="ux-tip">💡 Dica: Use o botão <strong>?</strong> no canto inferior direito para um tour detalhado desta tela.</div>'
+        '<div class="ux-tip">💡 Dica: Use o botão <strong>?</strong> no canto inferior direito para um tour detalhado desta tela.</div>' +
+        '<div class="ux-tip" style="background:rgba(255,170,0,.1);border-color:rgba(255,170,0,.3);color:#ffcf6b;display:block;margin-top:8px">⚠️ <strong>Importante (documentação oficial do T3MP3ST):</strong> só o operador de <strong>Recon</strong> executa ferramentas de verdade (nmap, DNS, HTTP). As fases seguintes (exploração, etc.) são <strong>andaime/simulação</strong>, não exploração autônoma — nem no projeto original. E o recon precisa do <strong>nmap</strong> instalado, senão a missão trava em "reconnaissance". Para o 1º teste real, use um alvo simples como <code>scanme.nmap.org</code>.</div>'
       );
     }
 
