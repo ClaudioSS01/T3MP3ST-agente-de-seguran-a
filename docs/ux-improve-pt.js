@@ -2902,6 +2902,19 @@
     buildEvidenceLedger();
     installFindings();
     tagOperatorBadge();
+    improveStopButton();
+  }
+
+  // Botão "Parar" claro na Sala de Guerra (relabela o ✕ de abortar)
+  function improveStopButton() {
+    var b = el('cmdAbortBtn');
+    if (b && !b.__uxLabeled) {
+      b.innerHTML = '⏹ Parar';
+      b.title = 'Parar / abortar a missão (tecla Esc)';
+      b.style.padding = '8px 16px';
+      b.style.fontWeight = '700';
+      b.__uxLabeled = true;
+    }
   }
 
   // Tooltip explicando o badge de contagem de agentes ("8")
