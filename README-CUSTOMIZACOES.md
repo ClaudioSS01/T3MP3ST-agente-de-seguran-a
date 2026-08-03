@@ -2,7 +2,7 @@
 
 Registro de tudo que foi ajustado nesta instância local do T3MP3ST. **Todas as mudanças de UI são via camada de overlay (não-invasivas e 100% reversíveis)** — o código original do T3MP3ST não foi alterado, exceto por tags `<script>` no `index.html` e o tour antigo comentado.
 
-Última atualização: 2026-08-03.
+Última atualização: 2026-08-03 (v2 — motor de recon expandido).
 
 ---
 
@@ -73,6 +73,24 @@ Instala ferramentas **sob demanda, por ferramenta** (só o que vai usar), sem ad
 - Testado: `nuclei` instalado do zero (v3.11.0, release oficial) → servidor passou a achá-lo (`/api/tools/execute nuclei` deixou de dar ENOENT). httpx já estava.
 - ⚠️ Honestidade: NÃO é "instala sozinho no meio da chamada pelo navegador" — isso exigiria o servidor baixar+executar binários da internet sob demanda (risco de segurança). É um comando por ferramenta; o Chat mostra o comando exato quando falta. nmap continua precisando de admin.
 
+### `chat-recon-v2.js` (~570 linhas) — **NOVO** motor de recon expandido
+
+Cobre **40+ dos 60 pontos** do checklist de auditoria web black-box passiva (ver `docs/RECON_METHODOLOGY.md`). Adiciona um botão **🎯 Recon V2** na barra do Chat.
+
+**8 fases automáticas** — todas passivas, todas passando pelo portão de aprovação `/api/approvals/authorize-target`:
+1. **HTTP + Security Headers** (curl -sSI) — CSP/HSTS/XFO/XCT/CORS/Permissions-Policy + cookies flags
+2. **DNS + DMARC/SPF** (via `dns.google` proxy pelo curl) — A/AAAA/MX/TXT/NS/DMARC — detecta SPF fraco (`~all`/`?all`) e DMARC `p=none`/ausente
+3. **Shodan InternetDB** — portas + CVEs indexadas + tags — sem API key, passivo
+4. **Certificate Transparency** (crt.sh) — descobre todos os subdomínios do domínio raiz
+5. **Common paths** (~40) com **SPA-aware fallback detection** — compara content-length com um path aleatório inexistente para filtrar falso-positivo de catch-all
+6. **JS bundle secrets** — 19 regex TruffleHog-style (AKIA/AIza/eyJ/sk_live_/ghp_/xoxb-/VITE_/NEXT_PUBLIC_/REACT_APP_/Supabase URL/S3/GCS/Azure/Discord+Slack webhooks/service_role)
+7. **HTML markers** — Replit dev banner, bolt.new badge, comentários TODO/FIXME/senha/backup, sourcemap references
+8. **TLS check** (openssl s_client -tls1/-tls1_1/-tls1_2) — sinaliza TLS 1.0/1.1 habilitados como MÉDIO
+
+Cada achado é registrado no **Cofre** via `window.addFinding()` (integra com a persistência já existente em `t3ux_findings_v1`). Testado com `scripts/test-chat-recon-v2.mjs` — **25/25 unidade + integração opt-in** (server up).
+
+**Base metodológica:** `docs/RECON_METHODOLOGY.md` documenta cada um dos 60 pontos com comandos executáveis e status (✅ automatizado / 🟡 semi / 🔒 exige auth / ⚠️ manual).
+
 ## 4. Diagnósticos importantes
 
 - **"Could not connect to local LLM"** = Ollama não estava rodando (não auto-sobe após reboot). Resolvido; launcher agora garante.
@@ -86,6 +104,20 @@ Ver `FEATURES.md` e `WHITEPAPER.md` do próprio repo. Em resumo:
 - **Removido/stub (encenação):** Pliny Specials (LEVIATHAN, GORGON, HYDRA, etc. — RETIRADOS, rotas `/api/pliny/*` removidas); módulos avançados em stub (ExploitEngine, SwarmController, CloudSecurityEngine, PersistenceController, etc.); fases da kill chain após o recon.
 - **Exploração autônoma (exploit/lateral/exfil/persistência/C2) não é um bug a corrigir** — é problema não resolvido da área e não foi implementado como capacidade real. O caminho legítimo é usar ferramentas-padrão reais (nuclei/sqlmap/httpx) human-in-the-loop nos alvos autorizados.
 
+## 6. Deploy fora da máquina (VPS DigitalOcean)
+
+Ver **`docs/DEPLOY_VPS.md`** — guia passo-a-passo para rodar o T3MP3ST no VPS `164.92.90.27`:
+
+- Docker Compose já pronto no repo (Dockerfile alpine + Ollama no host)
+- Nginx + Let's Encrypt (HTTPS)
+- **Cloudflare Access (Zero Trust)** como camada de auth (MFA + SSO), com fallback para basic-auth
+- Systemd para restart no boot
+- Firewall (`ufw`) fecha 3333 externo
+- Rate limiting + fail2ban recomendados
+- Custo: ~$12/mês (2 GB RAM recomendado para qwen 7b)
+
+Após deploy: acessa `https://t3mp3st.seudominio.com` do celular / notebook / qualquer lugar — não precisa mais deixar o PC ligado.
+
 ## Como reverter tudo (voltar ao T3MP3ST original)
 
-Remover do `index.html` as 4 linhas `<script src="*-pt.js">` e descomentar o bloco `TOUR_REMOVED`. Os arquivos `docs/*-pt.js` podem ser apagados. Backup do index em inglês: `docs/index.html.bak-en`.
+Remover do `index.html` as 5 linhas `<script src="*-pt.js">` + `chat-recon-v2.js` e descomentar o bloco `TOUR_REMOVED`. Os arquivos `docs/*-pt.js` + `docs/chat-recon-v2.js` podem ser apagados. Backup do index em inglês: `docs/index.html.bak-en`.

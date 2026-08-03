@@ -69,6 +69,7 @@
     "lint": "eslint src/**/*.ts",
     "typecheck": "tsc --noEmit",
     "test:playbooks": "node scripts/test-playbook-routing.mjs",
+    "test:chat-recon-v2": "node scripts/test-chat-recon-v2.mjs",
     "decompose": "node scripts/decompose.mjs",
     "test:decompose": "node scripts/decompose.mjs --self-test",
     "probe:frontier": "node scripts/refusal-frontier.mjs",
