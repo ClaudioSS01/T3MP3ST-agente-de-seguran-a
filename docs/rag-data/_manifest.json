@@ -1,0 +1,305 @@
+{
+  "model": "nomic-embed-text",
+  "chunkSize": 512,
+  "chunkOverlap": 64,
+  "books": [
+    {
+      "file": "clickjacking.json.gz",
+      "source": "Clickjacking.pdf",
+      "pages": [
+        {
+          "text": "Clickjacking\nCSIRT PoP-MG\nalison@csirt.pop-mg.rnp.br",
+          "num": 1
+        },
+        {
+          "text": "Agenda\n● Clickjacking\n○ O que é e como funciona\n○ Vídeos e Exemplos\n● Técnicas \"avançadas\"\n○ Métodos de posicionamento\n○ Injeção de texto\n● Como se proteger\n● Clickjacking Tool",
+          "num": 2
+        },
+        {
+          "text": "O que é Clickjacking\n● Sequestro de Cliques entre domínios\n● Foi identificado e publicado em 2008 por\nJeremiah Grossman e Robert \"Rsnake\"\nHansen",
+          "num": 3
+        },
+        {
+          "text": "Processo de exploração\n1. Vítima acessa (ou recebe) uma página falsa\n2. Vítima clica em algum lugar da página falsa\nmas na verdade ela está clicando em algo\ninvisível\n3. Ação maliciosa é realizada",
+          "num": 4
+        },
+        {
+          "text": "Como é possível?\n○ Iframes\n○ Opacidade\n○ Ordem de pilha (Z-Index)\n○ Stacking + Opacidade",
+          "num": 5
+        },
+        {
+          "text": "Exemplo de código\n<html>\n<head>\n<Title> Teste2 CJ</title>\n</head>\n<body>\n<div>\n<input type=\"button\" style=\"position:absolute; left:470px; top:12px;\" value=\"Clique\">\n<input type=\"button\" style=\"position:absolute; left:550px; top:12px;\" value=\"Clique\">\n</div>\n<iframe style=\"opacity:0.3;\" height=\"27\" width=\"1000\"\nscrolling=\"no\" src=\"http://www.boardgamegeek.\ncom/geekmail#messagelist\"</iframe>\n</body>\n</html>",
+          "num": 6
+        },
+        {
+          "text": "Vídeos\nMacromedia Flash\n● Guya\nVídeo: http://www.youtube.com/watch?v=gxyLbpldmuU\nO jogo: http://guya.net/security/clickjacking/game.html\n● Feross\nhttp://www.youtube.com/watch?feature=player_embedded&v=-LbvglVj8Ho (0:45)",
+          "num": 7
+        },
+        {
+          "text": "Técnicas \"Avançadas\"\n● Fragmentos e âncoras\n● Injeção de texto",
+          "num": 8
+        },
+        {
+          "text": "Fragmentos e âncoras\n● Fragmentos e âncoras\n○ <a name=\"envio\">\n■ http://exemplo.com.br/index.html#envio\n○ <input type=\"submit\" value=\"Enviar\" id=\"envio\">\n■ http://exemplo.com.br/index.php?\ntitle=CJ&action=edit#envio",
+          "num": 9
+        },
+        {
+          "text": "Injeção de texto - Drag and Drop\n(Arrastar e soltar)\n● Todos navegadores implementam Drag and Drop API\n○ Inicialmente no Internet Explorer, depois, parte do\nHTML 5\n○ Pode passar dados entre domínios\n1. A vítima é induzida a arrastar um objeto visível de um ponto A a um ponto\nB.\n2. Quando o arrastamento começa, um script define o texto que deve ser\ncopiado para o campo de formulário de destino, o qual não fica visível\npara o usuário.\n3. Quando a vítima solta o objeto, o dado é copiado para o campo alvo.\n4. Deve ser feito para cada campo.\n5. Normalmente o usuário deve clicar depois em algum botão de submit.\nhttp://www.youtube.com/watch?v=2Q0ZS12R2hA&feature=related (7:15m)",
+          "num": 10
+        },
+        {
+          "text": "Como se proteger\n● Cliente (usuário)\n○ Links\n○ Noscript (firefox) - protege desde 2009\n● Servidor (desenvolvedor)\n○ X-Frame-Options header\n○ Frame busting / Frame killing",
+          "num": 11
+        },
+        {
+          "text": "X-Frame-Options\n● Introduzido em 2009 no Internet Explorer 8\n■ Internet Explorer, Safari, Firefox, Chrome\nWORDPRESS 3.1.3\ncurl -i www.wordpress.org/wp-login.php\nHTTP/1.1 200 OK\nServer: nginx\nDate: Mon, 12 Dec 2011 12:51:34 GMT\nContent-Type: text/html; charset=UTF-8\nConnection: close\nVary: Accept-Encoding\nExpires: Wed, 11 Jan 1984 05:00:00 GMT\nLast-Modified: Mon, 12 Dec 2011 12:51:34 GMT\nCache-Control: no-cache, must-revalidate, max-age=0\nPragma: no-cache\nSet-Cookie: wordpress_test_cookie=WP+Cookie+check; path=/; domain=.wordpress.org\nX-Frame-Options: SAMEORIGIN\nContent-Length: 2251",
+          "num": 12
+        },
+        {
+          "text": "Frame Busting\n● Verifica por meio de scripts se a página está\ncarregada em outro frame e em caso\npositivo, redireciona o frame para um nível\nativo.\nif (top.location != location)\ntop.location = self.location;\n■ Código pode ser quebrado por meio do atributo \"sandbox\" do\niframe (desabilita o javascript)\n■ Tratamento do evento \"onBeforeUnload\", disparado antes de\numa página ser descarregada.\n● Problemas com filtros de XSS",
+          "num": 13
+        },
+        {
+          "text": "Frame Busting\n● Melhor solução é por padrão exibir uma página em\nbranco e somente mostrar o documento original, caso o\ncódigo de proteção não esteja executando no contexto\nde um frame.\n<style>\nhtml {display:none;}\n</style>\n<script>\nif (self == top) {\ndocument.documentElement.style.display=\n\"block\";\n} else {\ntop.location = self.location;\n}\n</script>",
+          "num": 14
+        },
+        {
+          "text": "Clickjacking Tool\nDisponível em:\nhttp://www.contextis.com/research/tools/clickjacking-tool/cjtool.zip\n● Clickjacking básico\n● Pegar ID's\n● Injeção de texto",
+          "num": 15
+        },
+        {
+          "text": "Para saber mais....\n● Clickjacking (The Original Whitepaper)\nBy Jeremiah Grossman and Robert Hansen\nhttp://www.sectheory.com/clickjacking.htm\n● Next Generation Clickjacking\nBy Paul Stone, presented at BlackHat 2010\nhttp://www.contextis.com/resources/white-papers/clickjacking\n● Busting Frame Busting:\nA study of clickjacking vulnerabilities on top sites\nBy Stanford Web Security Group\nhttp://w2spconf.com/2010/papers/p27.pdf\n● Clickjacking at OWASP\nhttps://www.owasp.org/index.php/Clickjacking",
+          "num": 16
+        }
+      ],
+      "chunks": 3,
+      "sizeGzMb": 0.01
+    },
+    {
+      "file": "advanced_xss.json.gz",
+      "source": "Advanced_XSS.pdf",
+      "pages": 8,
+      "chunks": 10,
+      "sizeGzMb": 0.04
+    },
+    {
+      "file": "analisadores_de_vunerabilidades_de_rede.json.gz",
+      "source": "Analisadores de Vunerabilidades de Rede.pdf",
+      "pages": 8,
+      "chunks": 4,
+      "sizeGzMb": 0.02
+    },
+    {
+      "file": "analise_de_vulnerabilidades_a_rede_sem_fio.json.gz",
+      "source": "Analise de vulnerabilidades a rede sem fio.pdf",
+      "pages": 57,
+      "chunks": 49,
+      "sizeGzMb": 0.21
+    },
+    {
+      "file": "anonimato_na_internet.json.gz",
+      "source": "Anonimato na Internet.pdf",
+      "pages": 12,
+      "chunks": 18,
+      "sizeGzMb": 0.08
+    },
+    {
+      "file": "an_lise_das_fraudes_aplicadas_sobre_o_ambiente_internet_banking.json.gz",
+      "source": "Análise das fraudes aplicadas sobre o ambiente Internet Banking.pdf",
+      "pages": 130,
+      "chunks": 161,
+      "sizeGzMb": 0.68
+    },
+    {
+      "file": "an_lise_de_ferramentas_para_o_controle_de_spam.json.gz",
+      "source": "Análise de Ferramentas para o Controle de Spam.pdf",
+      "pages": 36,
+      "chunks": 8,
+      "sizeGzMb": 0.04
+    },
+    {
+      "file": "an_lise_de_malware_software_livre.json.gz",
+      "source": "Análise de malware Software Livre.pdf",
+      "pages": 36,
+      "chunks": 7,
+      "sizeGzMb": 0.03
+    },
+    {
+      "file": "an_lise_de_vulnerabilidades_e_ataques_de_redes_sem_fio.json.gz",
+      "source": "Análise de Vulnerabilidades e Ataques de Redes Sem fio.pdf",
+      "pages": 55,
+      "chunks": 79,
+      "sizeGzMb": 0.33
+    },
+    {
+      "file": "an_lise_forense_de_intrus_es_em_sistemas_computacionais_t_cnicas.json.gz",
+      "source": "Análise Forense de Intrusões em Sistemas Computacionais Técnicas.pdf",
+      "pages": 80,
+      "chunks": 148,
+      "sizeGzMb": 0.62
+    },
+    {
+      "file": "aplica_es_iptables.json.gz",
+      "source": "Aplicações Iptables.pdf",
+      "pages": 21,
+      "chunks": 16,
+      "sizeGzMb": 0.07
+    },
+    {
+      "file": "apost1_seguran_a_da_informa_o.json.gz",
+      "source": "APOST1 Segurança da Informação.pdf",
+      "pages": 53,
+      "chunks": 69,
+      "sizeGzMb": 0.3
+    },
+    {
+      "file": "apost2_seguran_a_da_informa_o.json.gz",
+      "source": "APOST2 Segurança da Informação.pdf",
+      "pages": 37,
+      "chunks": 38,
+      "sizeGzMb": 0.16
+    },
+    {
+      "file": "apost3_seguran_a_da_informa_o.json.gz",
+      "source": "APOST3 Segurança da Informação.pdf",
+      "pages": 24,
+      "chunks": 6,
+      "sizeGzMb": 0.03
+    },
+    {
+      "file": "apostila_para_hackers_iniciantes.json.gz",
+      "source": "Apostila para hackers iniciantes.pdf",
+      "pages": 13,
+      "chunks": 16,
+      "sizeGzMb": 0.07
+    },
+    {
+      "file": "asterisk_hacking.json.gz",
+      "source": "Asterisk Hacking.pdf",
+      "pages": 274,
+      "chunks": 342,
+      "sizeGzMb": 1.44
+    },
+    {
+      "file": "ataques_e_vulnerabilidades_em_redes.json.gz",
+      "source": "Ataques e Vulnerabilidades em Redes.pdf",
+      "pages": 75,
+      "chunks": 18,
+      "sizeGzMb": 0.08
+    },
+    {
+      "file": "aula_de_seguranca.json.gz",
+      "source": "Aula de seguranca.pdf",
+      "pages": 11,
+      "chunks": 8,
+      "sizeGzMb": 0.04
+    },
+    {
+      "file": "backtrack_5_manual.json.gz",
+      "source": "Backtrack 5 - Manual.pdf",
+      "pages": 165,
+      "chunks": 61,
+      "sizeGzMb": 0.27
+    },
+    {
+      "file": "backtrack_5_penetracao_e_testes_wireless.json.gz",
+      "source": "BackTrack 5 Penetracao e Testes Wireless.pdf",
+      "pages": 86,
+      "chunks": 36,
+      "sizeGzMb": 0.15
+    },
+    {
+      "file": "boas_pr_ticas_em_seguran_a_da_informa_o_pdf.json.gz",
+      "source": "Boas Práticas em Segurança da Informação.PDF",
+      "pages": 71,
+      "chunks": 106,
+      "sizeGzMb": 0.44
+    },
+    {
+      "file": "botnets.json.gz",
+      "source": "Botnets.pdf",
+      "pages": 482,
+      "chunks": 643,
+      "sizeGzMb": 2.73
+    },
+    {
+      "file": "buffer_overflow_attacks.json.gz",
+      "source": "Buffer Overflow Attacks.pdf",
+      "pages": 521,
+      "chunks": 623,
+      "sizeGzMb": 2.63
+    },
+    {
+      "file": "bypassing_av.json.gz",
+      "source": "bypassing-av.pdf",
+      "pages": 24,
+      "chunks": 13,
+      "sizeGzMb": 0.06
+    },
+    {
+      "file": "bz_footprinting.json.gz",
+      "source": "BZ-Footprinting.pdf",
+      "pages": 32,
+      "chunks": 6,
+      "sizeGzMb": 0.03
+    },
+    {
+      "file": "cap11_ddos.json.gz",
+      "source": "Cap11-DDoS.pdf",
+      "pages": 17,
+      "chunks": 2,
+      "sizeGzMb": 0.01
+    },
+    {
+      "file": "cap2_vulnerabilidades_ameacas_riscos.json.gz",
+      "source": "Cap2-Vulnerabilidades-Ameacas-Riscos.pdf",
+      "pages": 92,
+      "chunks": 11,
+      "sizeGzMb": 0.05
+    },
+    {
+      "file": "cap6_sniffers.json.gz",
+      "source": "Cap6-Sniffers.pdf",
+      "pages": 24,
+      "chunks": 2,
+      "sizeGzMb": 0.01
+    },
+    {
+      "file": "ceh_study_guide.json.gz",
+      "source": "CEH Study Guide.pdf",
+      "pages": 439,
+      "chunks": 555,
+      "sizeGzMb": 2.33
+    },
+    {
+      "file": "chapter_6_attacking_the_client_0.json.gz",
+      "source": "Chapter-6-Attacking-the-Client_0.pdf",
+      "pages": 31,
+      "chunks": 21,
+      "sizeGzMb": 0.09
+    },
+    {
+      "file": "concurso_cebraspe_amaz_nia_azul.json.gz",
+      "source": "Concurso Cebraspe - Amazônia Azul.pdf",
+      "pages": 5,
+      "chunks": 5,
+      "sizeGzMb": 0.02
+    },
+    {
+      "file": "conhe_a_e_entenda_como_usar_o_t50.json.gz",
+      "source": "Conheça e entenda como usar o  t50.pdf",
+      "pages": 1,
+      "chunks": 1,
+      "sizeGzMb": 0
+    },
+    {
+      "file": "construindo_umanalisador_deexecut_veis.json.gz",
+      "source": "CONSTRUINDO UMANALISADOR DEEXECUTÁVEIS.pdf",
+      "pages": 20,
+      "chunks": 3,
+      "sizeGzMb": 0.01
+    }
+  ],
+  "embeddingDim": 768,
+  "createdAt": "2026-08-04T18:01:41.244Z"
+}

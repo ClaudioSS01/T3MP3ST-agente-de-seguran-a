@@ -248,6 +248,57 @@ node scripts/set-default-model.mjs qwen2.5:3b
 
 **Validado no Chrome:** perguntei ao Comandante (qwen2.5-coder:7b) sobre DMARC p=none. Respondeu com definição completa de DMARC e SPF, identificou o risco de "phishing e spoofing", e deu plano de correção estruturado (p=quarantine → p=reject, ~all → -all). Resposta em ~1min30s, qualidade próxima de análise humana.
 
+## 3.7. RAG local — 33 livros de segurança como base de conhecimento (2026-08-04)
+
+O Comandante agora consulta uma **base de conhecimento local** com 33 livros/apostilas de segurança (PT+EN, ~50-500 páginas cada) antes de responder perguntas técnicas.
+
+**Pipeline (100% offline, sem API keys):**
+- **Extração:** `pdf-parse` v2 lê os PDFs (`~/Documents/agentes/ciber segurança/LIVROS HACKERS-.../*.pdf`)
+- **Chunking:** RecursiveCharacterTextSplitter — chunks de 512 tokens (~2048 chars) com 64 tokens de overlap. Filtra chunks <50 chars (headers/footers).
+- **Embedding:** `nomic-embed-text` via Ollama (`/api/embed`, 768 dim, ~275 MB). Chunks vetorizados uma vez, cached.
+- **Storage:** JSON gzipped por livro em `docs/rag-data/*.json.gz` + `_manifest.json` (índice). **Ficam no repo git** — clone traz o conhecimento junto, sem re-treino.
+- **Retrieval:** cosine similarity top-K=5, threshold `sim >= 0.35`. Client-side em JS puro (sem servidor extra).
+- **Injeção:** `<context>[n] fonte: livro\n<trecho>\n[...]</context>\n\nPergunta: <query>` prefixado no último user message. System prompt instrui o LLM a citar `[n]`.
+- **Trigger inteligente:** regex técnica (`cve|nmap|sqlmap|xss|csrf|payload|exploit|dmarc|clickjack|phish|owasp|kali|...`) + `("como"|"por que")` para queries >30 chars. Skip em saudações e queries <15 chars — evita RAG em "oi".
+
+**Números do corpus:**
+| Métrica | Valor |
+|---|---|
+| Livros processados | 33 (100%) |
+| Chunks totais | 3.088 |
+| Tamanho gzipped | 13 MB |
+| Dimensão de embedding | 768 (nomic-embed-text) |
+| Tempo de build (CPU) | ~40 min |
+
+**Prova cabal (test-rag-one-shot.mjs):**
+Perguntei: *"No livro sobre Clickjacking do CSIRT PoP-MG (autor Alison), qual é a técnica de Frame Busting recomendada?"*
+
+- **SEM RAG (qwen2.5-coder:7b):** "Não tenho essa informação nos meus livros." (42 chars, LLM admite honestamente)
+- **COM RAG:** Cita fonte `[2]` do "Clickjacking.pdf" do CSIRT PoP-MG, menciona "página em branco" (frase EXATA do livro), explica em detalhe técnico (835 chars com citações)
+
+**Testes automatizados:**
+- ✅ `test-rag.mjs` — 33/33 asserts (chunker, cosine, trigger, embed integração, manifest schema)
+- ✅ `test-rag-knowledge.mjs` — 15/16 (93.8%) retrieval quality em 4 tópicos técnicos
+- ✅ `test-rag-one-shot.mjs` — A/B com LLM real, prova impacto do RAG
+
+**Arquivos:**
+- `scripts/rag-build.mjs` (~220 linhas) — pipeline PDF → chunks → embeddings → JSON.gz
+- `docs/rag-client.js` (~230 linhas) — overlay que intercepta `fetch('/api/chat')` e injeta contexto
+- `scripts/test-rag.mjs`, `test-rag-knowledge.mjs`, `test-rag-one-shot.mjs` — testes unitários + integração
+- `docs/rag-data/*.json.gz` — 33 arquivos + `_manifest.json` (13 MB total)
+
+**API de controle (via console do browser):**
+```javascript
+window.__t3rag.stats()              // { booksLoaded, totalChunks, allLoaded, manifestBooks }
+window.__t3rag.search("clickjacking", 5)  // top-5 chunks
+window.__t3rag.config.topK = 3      // ajusta top-K
+window.__t3rag.config.minSim = 0.4  // ajusta threshold
+window.__t3rag.disable()            // desativa (restaura fetch original)
+window.__t3rag.lastSearch           // último retrieval feito
+```
+
+**Limitação conhecida:** `nomic-embed-text` tem viés English-first, então queries em PT contra livros EN têm recall ~15% menor. Para paridade real, migrar para `bge-m3` (2 GB, multilíngue robusto) via `ollama pull bge-m3` e trocar `EMBED_MODEL` em `rag-build.mjs` + `rag-client.js`. **Não fizemos** porque o corpus é 95% PT e o nomic responde bem.
+
 ## 4. Diagnósticos importantes
 
 - **"Could not connect to local LLM"** = Ollama não estava rodando (não auto-sobe após reboot). Resolvido; launcher agora garante.
