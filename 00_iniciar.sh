@@ -27,7 +27,7 @@ set -u
 # ─── Parse flags ──────────────────────────────────────────────────────────
 SKIP_BROWSER=0
 SKIP_BUILD=0
-MODEL="${MODEL:-qwen2.5:3b}"
+MODEL="${MODEL:-qwen2.5-coder:7b}"
 
 for arg in "$@"; do
   case $arg in

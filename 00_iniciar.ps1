@@ -26,7 +26,7 @@
 param(
     [switch]$SkipBrowser,
     [switch]$SkipBuild,
-    [string]$Model = 'qwen2.5:3b'
+    [string]$Model = 'qwen2.5-coder:7b'
 )
 
 # UTF-8 no console (paths têm "Segurança")

@@ -86,6 +86,8 @@ Ao final: abre `http://127.0.0.1:3333/ui/` no browser (usa `xdg-open`/`open`/`St
 
 **Validado:** rodei end-to-end em 04/08/2026 (Windows 11, Node v24.14, Ollama 0.31.1) — 9/9 passos verdes.
 
+**Modelo padrão:** `qwen2.5-coder:7b` (definido após benchmark que comparou 3 modelos — ver seção 4.1).
+
 ## 2.2. Killall (`00_killall.bat` / `00_killall.ps1` / `00_killall.sh`)
 
 Três arquivos irmãos dos iniciadores para **parar tudo com segurança**.
@@ -221,6 +223,30 @@ O `SYSTEM_PROMPT` do LLM local foi expandido para ~50 linhas de contexto denso. 
 - **Formato:** Markdown, conciso por padrão, expande se pedirem
 
 Resultado: chat vira útil para **qualquer pergunta de segurança** (não só recon). Ex: "explica CSP frame-ancestors", "como funciona Cloudflare Access", "riscos de Supabase anon key exposta" — o Comandante responde com profundidade técnica.
+
+## 3.6. Benchmark de modelos LLM (2026-08-04)
+
+Comparei 3 modelos Ollama em 3 tarefas técnicas do Comandante (DMARC/SPF, TURNSTILE+CORS+rate-limit, interpretação de headers HTTP). Prompts em `scripts/test-llm-comparison.mjs`. Métrica: score heurístico baseado em palavras-chave técnicas + tamanho + estrutura.
+
+| Modelo | Score | Latência média | Tamanho | RAM ativa |
+|---|---|---|---|---|
+| 🥇 **qwen2.5-coder:7b** | **57.7/100** | 136s | 4.36 GB | ~5 GB |
+| 🥈 llama3.1:8b | 57.4/100 | 174s | 4.58 GB | ~5.5 GB |
+| 🥉 qwen2.5:3b | 48.1/100 | 37s | 1.80 GB | ~2 GB |
+
+**Vencedor:** `qwen2.5-coder:7b` — 20% melhor score que qwen2.5:3b, empate técnico com llama3.1:8b mas 20% mais rápido. Estruturação clara com Markdown, menciona termos técnicos precisos ("phishing", "spoofing", "quarantine", "reject"), dá plano de correção com código inline.
+
+**Trade-off honesto:** 3.7× mais lento que qwen2.5:3b em CPU (136s vs 37s). Se a máquina tem GPU (CUDA/Metal), fica sub-30s. Se não tem GPU e prioriza velocidade, volte para qwen2.5:3b:
+
+```bash
+node scripts/set-default-model.mjs qwen2.5:3b
+```
+
+**Como definir modelo padrão:** `scripts/set-default-model.mjs <nome>` — escreve `TEMPEST_LOCAL_MODEL` no `~/.t3mp3st/.env`. Depois killall + iniciar novamente.
+
+**Reproduzir benchmark:** `node scripts/test-llm-comparison.mjs --models=qwen2.5:3b,qwen2.5-coder:7b,llama3.1:8b`
+
+**Validado no Chrome:** perguntei ao Comandante (qwen2.5-coder:7b) sobre DMARC p=none. Respondeu com definição completa de DMARC e SPF, identificou o risco de "phishing e spoofing", e deu plano de correção estruturado (p=quarantine → p=reject, ~all → -all). Resposta em ~1min30s, qualidade próxima de análise humana.
 
 ## 4. Diagnósticos importantes
 
