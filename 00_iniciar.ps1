@@ -321,7 +321,9 @@ if (Test-T3mpUp) {
     Write-Info "Iniciando servidor Node em segundo plano…"
     $stdout = Join-Path $env:TEMP 't3mp3st-stdout.log'
     $stderr = Join-Path $env:TEMP 't3mp3st-stderr.log'
-    $proc = Start-Process -FilePath 'node' -ArgumentList "$distServer" `
+    # Path relativo (dist/server.js) evita problema com espaços em $PSScriptRoot.
+    # Start-Process com -WorkingDirectory garante que o cwd seja a raiz do repo.
+    $proc = Start-Process -FilePath 'node' -ArgumentList @('dist/server.js') `
         -WorkingDirectory $PSScriptRoot `
         -RedirectStandardOutput $stdout -RedirectStandardError $stderr `
         -WindowStyle Hidden -PassThru
