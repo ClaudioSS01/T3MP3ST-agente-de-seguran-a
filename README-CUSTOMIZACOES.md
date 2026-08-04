@@ -55,6 +55,37 @@ npm install && npm run build && npm run server:prod
 - Motivo: em 2026-08-02 a máquina travou (93% RAM) por causa de **previews de browser vazados** (não do servidor). O launcher evita duplicar o servidor; e a regra passou a ser NÃO usar preview de browser embutido pra testar a UI pesada (Claudio testa no Chrome).
 - ⚠️ O `.ps1` precisa ser salvo em **UTF-8 com BOM** (o caminho tem "Segurança"/ç; PowerShell 5.1 corrompe UTF-8-sem-BOM).
 
+## 2.1. Iniciadores auto-checkin (`00_Iniciar.bat` / `00_iniciar.ps1` / `00_iniciar.sh`)
+
+Três arquivos na **raiz do repo** que instalam tudo que falta e sobem o servidor. Ideal para dar duplo-clique quando montar o projeto em outra máquina.
+
+**O que cada um checa/instala em ordem (9 passos):**
+1. **Node.js ≥ 20** — instala via `winget install OpenJS.NodeJS.LTS` (Win) / NodeSource + apt (Linux) / brew (macOS) se faltar
+2. **npm** — verifica que veio com Node
+3. **Ollama** — instala via `winget install Ollama.Ollama` / `curl install.sh` / brew
+4. **Daemon Ollama** — sobe `ollama serve` em background se `:11434` estiver frio
+5. **Modelo LLM** — se `qwen2.5:3b` não está instalado, roda `ollama pull qwen2.5:3b` (com fallback)
+6. **`~/.t3mp3st/.env`** — cria com defaults locais (provider=local, model=qwen2.5:3b, port=3333, arsenal=true) se faltar
+7. **`node_modules`** — `npm ci` se ausente ou desatualizado (via mtime de package-lock.json)
+8. **`dist/server.js`** — `npm run build` se ausente ou desatualizado (via mtime de src/server.ts)
+9. **Servidor T3MP3ST** — `node dist/server.js` em background, checa `:3333/api/health` até 200 OK
+
+Ao final: abre `http://127.0.0.1:3333/ui/` no browser (usa `xdg-open`/`open`/`Start-Process`).
+
+**Uso Windows:**
+- Duplo-clique em `00_Iniciar.bat` (wrapper que chama o .ps1 com `-ExecutionPolicy Bypass`)
+- OU: `pwsh -File 00_iniciar.ps1`
+- Flags: `-SkipBrowser`, `-SkipBuild`, `-Model qwen2.5-coder:7b`
+
+**Uso Linux/macOS:**
+- `chmod +x 00_iniciar.sh && ./00_iniciar.sh`
+- Flags: `--no-browser`, `--skip-build`, `--model=<nome>`
+- Env: `MODEL=qwen2.5:3b ./00_iniciar.sh`
+
+**Fica idempotente** — se algo já está instalado/rodando, pula. Se `:3333` já responde, avisa e não sobe segunda instância.
+
+**Validado:** rodei end-to-end em 04/08/2026 (Windows 11, Node v24.14, Ollama 0.31.1) — 9/9 passos verdes.
+
 ## 3. Tradução PT-BR + UX (arquivos overlay em `docs/`)
 
 Carregados via `<script>` no fim do `index.html`:
