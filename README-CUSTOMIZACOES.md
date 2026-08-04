@@ -86,6 +86,30 @@ Ao final: abre `http://127.0.0.1:3333/ui/` no browser (usa `xdg-open`/`open`/`St
 
 **Validado:** rodei end-to-end em 04/08/2026 (Windows 11, Node v24.14, Ollama 0.31.1) — 9/9 passos verdes.
 
+## 2.2. Killall (`00_killall.bat` / `00_killall.ps1` / `00_killall.sh`)
+
+Três arquivos irmãos dos iniciadores para **parar tudo com segurança**.
+
+**O que cada um mata (4 passos):**
+1. Processo Node ligado à porta **:3333** (T3MP3ST server) — encontrado via `Get-NetTCPConnection` / `lsof -ti :3333` / `fuser` / `ss`
+2. Processos `node` que têm `dist/server.js` na linha de comando (double-check via `Win32_Process.CommandLine` / `pgrep -f`)
+3. Daemon **Ollama** (:11434) + processos `ollama.exe` filhos — opt-out com `-KeepOllama` / `--keep-ollama`
+4. Limpa `t3mp3st-stdout.log`, `t3mp3st-stderr.log` (e `ollama.log` no Linux) de `%TEMP%` / `/tmp`
+
+**Não mata `node.exe` genericamente** — só os que estão bound ao :3333 OU rodando `dist/server.js`. Protege outros apps Node do usuário (VSCode, dev servers, etc).
+
+**No Linux:** tenta `brew services stop` e `systemctl stop ollama` primeiro (se instalado assim), depois força kill por PID como fallback. Kill graceful (SIGTERM → 2s → SIGKILL).
+
+**Uso Windows:**
+- Duplo-clique em `00_killall.bat`
+- OU: `pwsh -File 00_killall.ps1 [-KeepOllama]`
+
+**Uso Linux/macOS:**
+- `./00_killall.sh` (mata tudo, incluindo Ollama)
+- `./00_killall.sh --keep-ollama` (preserva Ollama)
+
+**Validado:** subiu server, matou com `-KeepOllama`, confirmado :3333 morto e :11434 vivo. Reversão: `./00_iniciar.sh` ou `00_Iniciar.bat`.
+
 ## 3. Tradução PT-BR + UX (arquivos overlay em `docs/`)
 
 Carregados via `<script>` no fim do `index.html`:
