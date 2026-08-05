@@ -69,9 +69,16 @@
       .then(function (d) {
         _inst = { curl: true, openssl: true };
         if (d && d.tools) {
-          Object.keys(d.tools).forEach(function (k) {
-            if (d.tools[k] && d.tools[k].installed) _inst[k] = true;
-          });
+          // tools pode ser array [{id, available}] ou objeto {id: {installed}}
+          if (Array.isArray(d.tools)) {
+            d.tools.forEach(function (t) {
+              if (t && t.available) _inst[t.id || t.binary] = true;
+            });
+          } else {
+            Object.keys(d.tools).forEach(function (k) {
+              if (d.tools[k] && (d.tools[k].installed || d.tools[k].available)) _inst[k] = true;
+            });
+          }
         }
         return _inst;
       })
@@ -136,6 +143,17 @@
       '---',
       '(repita o bloco --- para cada achado)',
       '',
+      '## POSTURA: 100% DEFENSIVA',
+      'O objetivo é PROTEGER sistemas — encontrar brechas antes que atacantes encontrem.',
+      'NUNCA destruir, derrubar, apagar dados, ou causar qualquer dano ao alvo.',
+      'O relatório final deve ajudar o DONO do sistema a corrigir os problemas.',
+      '',
+      '## Sistema de Tiers (controle de segurança)',
+      '- **Tier 1-2** (leitura, sondagem passiva): curl, httpx, subfinder, whois, dig → rodam AUTOMATICAMENTE',
+      '- **Tier 3** (intrusivo): sqlmap, nuclei agressivo, brute-force → o backend pede APROVAÇÃO HUMANA',
+      '- **BLOQUEADO** (nunca usar): metasploit, hydra, pacu, frida → causam dano real, proibidos',
+      'Se você achar que precisa de uma ferramenta Tier 3, EXPLIQUE no THOUGHT por que e deixe o backend pedir aprovação.',
+      '',
       '## Regras Invioláveis',
       '1. Só reporte o que OBSERVOU na saída da ferramenta. NUNCA fabrique.',
       '2. Responda em português (PT-BR).',
@@ -147,6 +165,17 @@
       '8. Quando delegar, diga qual operador: "Delegando ao RECON: ..." ou "Delegando ao SCANNER: ..."',
       '9. Após scan de portas, investigue serviços encontrados.',
       '10. Após encontrar paths expostos, acesse-os para ver o conteúdo.',
+      '11. NUNCA execute comandos destrutivos (rm, drop, delete, shutdown, kill, etc.).',
+      '12. Para cada achado, tente indicar: arquivo/path exato, o que corrigir, e o risco se não corrigir.',
+      '',
+      '## Formato do FINAL (achados)',
+      'Cada achado deve ter:',
+      '- ACHADO: título curto',
+      '- SEVERIDADE: CRÍTICO|ALTO|MÉDIO|BAIXO',
+      '- EVIDÊNCIA: o que foi observado (saída literal da ferramenta)',
+      '- LOCAL: arquivo, path, header, ou config exata onde está o problema',
+      '- RISCO: como um atacante malicioso poderia explorar isso',
+      '- CORREÇÃO: o que fazer para fechar essa brecha (código/config concreta)',
       '',
       '## Alvo autorizado: ' + host,
     ].join('\n');
@@ -197,6 +226,7 @@
       var achado = (block.match(/ACHADO\s*:\s*(.+)/i) || [])[1];
       var sev = (block.match(/SEVERIDADE\s*:\s*(\S+)/i) || [])[1];
       var evidencia = (block.match(/EVIDÊNCIA\s*:\s*(.+)/i) || block.match(/EVIDENCIA\s*:\s*(.+)/i) || [])[1];
+      var local = (block.match(/LOCAL\s*:\s*(.+)/i) || [])[1];
       var risco = (block.match(/RISCO\s*:\s*(.+)/i) || [])[1];
       var correcao = (block.match(/CORREÇÃO\s*:\s*(.+)/i) || block.match(/CORRECAO\s*:\s*(.+)/i) || [])[1];
       if (achado) {
@@ -206,6 +236,7 @@
           title: achado.trim(),
           msg: achado.trim(),
           evidence: (evidencia || '').trim(),
+          location: (local || '').trim(),
           risk: (risco || '').trim(),
           fix: (correcao || '').trim(),
           phase: 'react',
