@@ -861,7 +861,7 @@
     // Senão, PDF V2 legado (só sumário)
     loadJsPdf().then(function (jsPDF) {
       var doc = new jsPDF({ format: 'a4', unit: 'pt' });
-      // Cores MedSimples
+      // Cores do relatório
       var C_PRIMARY = [37, 99, 235];
       var C_DARK = [30, 64, 175];
       var C_TEXT = [17, 24, 39];
