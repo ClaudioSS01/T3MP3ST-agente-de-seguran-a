@@ -688,9 +688,9 @@
         }
       }
     }
-    // Preferência: V3 (achados estruturados) quando disponível. Fallback V2.
-    var reconFn = (window.__t3reconV3 && window.__t3reconV3.fullReconV3) || fullReconV2;
-    return reconFn(target, step)
+    // Preferência: ReAct (loop adaptativo c/ Arsenal completo) > V3 > V2
+    var reconFn = (window.__t3react && window.__t3react.fullReconReact) || (window.__t3reconV3 && window.__t3reconV3.fullReconV3) || fullReconV2;
+    return reconFn(target, step, rawTarget)
       .then(function (result) {
         var b = document.getElementById(bubbleId);
         if (b) appendDownloadButtons(b, result);

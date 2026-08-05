@@ -20,12 +20,14 @@
   var ollamaOk = null;        // null=desconhecido, true/false após teste
 
   var SYSTEM_PROMPT = [
-    'Você é o COMANDANTE — agente-chefe do T3MP3ST, uma bancada de segurança ofensiva autorizada.',
+    'Você é o COORDENADOR (OP_ADMIRALE) do T3MP3ST — plataforma de segurança ofensiva autorizada.',
     'Fala em português, direto, técnico, sem enrolação, com o operador (Claudio).',
     '',
     '## Quem você é',
-    'Coordena uma equipe: Recon (OSINT/descoberta), Scanner (vulnerabilidades), Exploiter (exploração),',
-    'Infiltrator (movimento lateral), Exfiltrator (dados), Ghost (persistência), Analyst (relatórios).',
+    'Coordena operadores especializados:',
+    '🔍 Recon (OSINT/descoberta), 🎯 Scanner (vulnerabilidades), 📂 Explorer (fuzzing/paths),',
+    '⚔️ Infiltrator (em breve), 📤 Exfiltrator (em breve), 👻 Ghost (em breve), 📊 Analyst (relatórios).',
+    'Quando o operador pede para analisar um alvo, o motor ReAct (Reason+Act) é ativado automaticamente.',
     '',
     'Você TAMBÉM é um chat de segurança geral — o operador pode te perguntar sobre qualquer tópico',
     '(pentest, CVE específico, LGPD, Base44, OWASP, headers, TLS, etc). Responda com profundidade técnica.',
@@ -170,7 +172,8 @@
       '  <div class="t3c-pull" id="t3cPullMsg"></div>' +
       '  <div class="t3c-msgs" id="t3cMsgs"></div>' +
       '  <div class="t3c-input">' +
-      '    <textarea id="t3cInput" placeholder="Fale com o Comandante… ex: \'Faça um recon em scanme.nmap.org e me diga o que achar\'"></textarea>' +
+      '    <textarea id="t3cInput" placeholder="Fale com o Coordenador (OP_ADMIRALE)… ex: \'Analise a segurança de scanme.nmap.org\'"></textarea>' +
+      '    <button class="t3c-btn" id="t3cStop" style="display:none;background:rgba(255,80,80,.15);color:#ff9090;border:1px solid rgba(255,80,80,.4);padding:0 14px" title="Parar operação ReAct">⏹</button>' +
       '    <button class="t3c-send" id="t3cSend">Enviar</button>' +
       '  </div>' +
       '</div>';
@@ -185,6 +188,10 @@
     document.getElementById('t3cPullBtn').addEventListener('click', pullModel);
     document.getElementById('t3cClear').addEventListener('click', function () {
       history = []; renderMsgs();
+    });
+    document.getElementById('t3cStop').addEventListener('click', function () {
+      if (window.__t3react) window.__t3react.abort();
+      this.style.display = 'none';
     });
     renderMsgs();
     return true;
@@ -306,12 +313,15 @@
     if (!box) return;
     if (!history.length) {
       box.innerHTML =
-        '<div class="t3c-empty">👋 Fale com o <strong>Comandante</strong>. Ele conversa — e quando você pede <strong>recon num alvo</strong>, ele <strong>executa ferramentas de verdade</strong> (curl/DNS agora, nmap quando instalado) e te mostra a saída literal + análise.<br><br>' +
+        '<div class="t3c-empty">🎖️ <strong>Coordenador OP_ADMIRALE</strong> online.<br>' +
+        'Diga o que quer e eu aciono os operadores certos.<br><br>' +
+        'Quando você aponta um <strong>alvo</strong>, eu ativo o motor <strong>ReAct</strong> (Reason + Act):<br>' +
+        'raciocino → escolho a ferramenta → executo → analiso resultado → repito até ter evidência.<br><br>' +
         'Experimente:' +
-        '<div><span class="t3c-chip" data-ex="faz um recon em example.com">🔍 Recon em example.com (real)</span>' +
-        '<span class="t3c-chip" data-ex="analisa o site https://scanme.nmap.org">🔍 Analisar um site</span>' +
-        '<span class="t3c-chip" data-ex="Explique em 3 passos como você faria um pentest autorizado.">Como fazer um pentest</span></div>' +
-        '<div style="margin-top:10px;font-size:11px;color:#6a7a85">⚠️ Só rode recon em alvos que você tem autorização. O sistema pede aprovação de escopo (autorizada automaticamente quando você nomeia o alvo).</div></div>';
+        '<div><span class="t3c-chip" data-ex="analise a segurança de example.com">🔍 Analisar example.com</span>' +
+        '<span class="t3c-chip" data-ex="faça um recon completo em scanme.nmap.org">🎯 Recon em scanme.nmap.org</span>' +
+        '<span class="t3c-chip" data-ex="Quais ferramentas estão instaladas?">🔧 Ver Arsenal</span></div>' +
+        '<div style="margin-top:10px;font-size:11px;color:#6a7a85">⚠️ Só rode análise em alvos autorizados. O sistema pede aprovação de escopo automática.</div></div>';
       Array.prototype.forEach.call(box.querySelectorAll('.t3c-chip'), function (c) {
         c.addEventListener('click', function () {
           var inp = document.getElementById('t3cInput'); inp.value = c.getAttribute('data-ex'); inp.focus();
