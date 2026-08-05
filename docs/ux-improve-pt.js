@@ -2886,33 +2886,22 @@
   // ═══════════════════════════════════════════════
   // EXECUTAR TUDO
   // ═══════════════════════════════════════════════
+  // Isolamento: roda cada camada em try/catch — uma quebrando NÃO derruba as outras.
+  function safeRun(fn) {
+    try { fn(); }
+    catch (e) { try { console.warn('[ux-pt] camada falhou:', (fn && fn.name) || '?', e && e.message); } catch (_) {} }
+  }
+
   function run() {
-    translateDynamic();
-    addExplainers();
-    renameHeaders();
-    buildTerminalSidebar();
-    addInlineHelpIcons();
-    improveAdmiralPage();
-    improveArsenalButtons();
-    improveSettingsPage();
-    improveSelfImprovePage();
-    improveConfigsPage();
-    improveLiveScanPage();
-    buildWarRoomTabs();
-    buildOperatorsTabs();
-    buildBenchmarksTabs();
-    buildCtfTabs();
-    buildArsenalTabs();
-    buildSettingsTabs();
-    buildSelfImproveTabs();
-    buildConfigsTabs();
-    improveReceiptsPage();
-    improveEvidencePage();
-    buildEvidenceLedger();
-    installFindings();
-    tagOperatorBadge();
-    improveStopButton();
-    improveArsenalInstalled();
+    [
+      translateDynamic, addExplainers, renameHeaders, buildTerminalSidebar,
+      addInlineHelpIcons, improveAdmiralPage, improveArsenalButtons, improveSettingsPage,
+      improveSelfImprovePage, improveConfigsPage, improveLiveScanPage, buildWarRoomTabs,
+      buildOperatorsTabs, buildBenchmarksTabs, buildCtfTabs, buildArsenalTabs,
+      buildSettingsTabs, buildSelfImproveTabs, buildConfigsTabs, improveReceiptsPage,
+      improveEvidencePage, buildEvidenceLedger, installFindings, tagOperatorBadge,
+      improveStopButton, improveArsenalInstalled
+    ].forEach(safeRun);
   }
 
   // Botão "Parar" claro na Sala de Guerra (relabela o ✕ de abortar)
@@ -2998,18 +2987,26 @@
   }
 
   function improveArsenalInstalled() {
+    if (window.__uxNoArsenal) return; // kill-switch de emergência
     var page = el('page-arsenal');
     if (!page || !page.classList.contains('active')) return; // só quando a aba Arsenal está aberta
     fetchArsStatus().then(function () {
-      arsSummary();
-      badgeArsenal();
+      try { arsSummary(); } catch (e) {}
+      try { badgeArsenal(); } catch (e) {}
       var grid = el('arsenalGrid');
       if (grid && !grid.__uxArsObserved) {
         grid.__uxArsObserved = true;
-        var obs = new MutationObserver(function () { badgeArsenal(); });
-        obs.observe(grid, { childList: true });
+        // Debounce + try/catch: nunca empilha nem trava se re-renderizar em rajada
+        var obs = new MutationObserver(function () {
+          if (grid.__uxBadgeT) return;
+          grid.__uxBadgeT = setTimeout(function () {
+            grid.__uxBadgeT = null;
+            try { badgeArsenal(); } catch (e) {}
+          }, 250);
+        });
+        try { obs.observe(grid, { childList: true }); } catch (e) {}
       }
-    });
+    }).catch(function () {});
   }
 
   // Tooltip explicando o badge de contagem de agentes ("8")
@@ -3034,36 +3031,19 @@
     // Cuidado: tour-pt.js também intercepta. Encadear.
     var currentNav = window.navigateTo;
     window.navigateTo = function (page) {
-      currentNav(page);
+      try { currentNav(page); } catch (e) { try { console.warn('[ux-pt] navegação nativa falhou:', e && e.message); } catch (_) {} }
       setTimeout(function () {
-        translateDynamic();
-        addExplainers();
-        renameHeaders();
-        buildTerminalSidebar();
-        addInlineHelpIcons();
-        improveAdmiralPage();
-        improveArsenalButtons();
-        improveSettingsPage();
-        improveSelfImprovePage();
-        improveConfigsPage();
-        improveLiveScanPage();
-        buildWarRoomTabs();
-        buildOperatorsTabs();
-        buildBenchmarksTabs();
-        buildCtfTabs();
-        buildArsenalTabs();
-        buildSettingsTabs();
-        buildSelfImproveTabs();
-        buildConfigsTabs();
-        improveReceiptsPage();
-        improveEvidencePage();
-        improveArsenalInstalled();
+        [
+          translateDynamic, addExplainers, renameHeaders, buildTerminalSidebar,
+          addInlineHelpIcons, improveAdmiralPage, improveArsenalButtons, improveSettingsPage,
+          improveSelfImprovePage, improveConfigsPage, improveLiveScanPage, buildWarRoomTabs,
+          buildOperatorsTabs, buildBenchmarksTabs, buildCtfTabs, buildArsenalTabs,
+          buildSettingsTabs, buildSelfImproveTabs, buildConfigsTabs, improveReceiptsPage,
+          improveEvidencePage, improveArsenalInstalled
+        ].forEach(safeRun);
       }, 200);
       // Self-Improvement renderiza com 60ms delay, então precisa de re-run adicional
-      setTimeout(function () {
-        improveSelfImprovePage();
-        addInlineHelpIcons();
-      }, 500);
+      setTimeout(function () { safeRun(improveSelfImprovePage); safeRun(addInlineHelpIcons); }, 500);
     };
   }
 
