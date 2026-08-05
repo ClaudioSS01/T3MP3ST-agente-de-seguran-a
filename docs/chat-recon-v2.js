@@ -688,7 +688,9 @@
         }
       }
     }
-    return fullReconV2(target, step)
+    // Preferência: V3 (achados estruturados) quando disponível. Fallback V2.
+    var reconFn = (window.__t3reconV3 && window.__t3reconV3.fullReconV3) || fullReconV2;
+    return reconFn(target, step)
       .then(function (result) {
         var b = document.getElementById(bubbleId);
         if (b) appendDownloadButtons(b, result);
@@ -852,6 +854,11 @@
   }
 
   function downloadPdf(r) {
+    // Se o motor V3 gerou o resultado com achados estruturados (com command/response/attackNarrative), usa o PDF V3
+    if (window.__t3pdfV3 && r && r.findings && r.findings[0] && r.findings[0].command !== undefined) {
+      return window.__t3pdfV3.download(r);
+    }
+    // Senão, PDF V2 legado (só sumário)
     loadJsPdf().then(function (jsPDF) {
       var doc = new jsPDF({ format: 'a4', unit: 'pt' });
       // Cores MedSimples

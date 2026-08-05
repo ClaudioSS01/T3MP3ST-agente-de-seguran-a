@@ -298,6 +298,13 @@
       "pages": 20,
       "chunks": 3,
       "sizeGzMb": 0.01
+    },
+    {
+      "file": "creating_security_policies_and_implementing_identity_management_with_active_directory.json.gz",
+      "source": "Creating Security Policies and Implementing Identity Management with Active Directory.pdf",
+      "pages": 235,
+      "chunks": 388,
+      "sizeGzMb": 1.65
     }
   ],
   "embeddingDim": 768,
